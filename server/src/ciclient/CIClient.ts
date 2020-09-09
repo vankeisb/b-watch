@@ -1,13 +1,23 @@
 import * as uuid from "uuid";
-import {BambooConfig, BuildStatus, Config, TravisConfig} from "bwatch-common";
 import {Fetch} from "./Fetch";
-import {TravisFetch} from "./Travis";
-import {BambooFetch} from "./Bamboo";
+import {TravisConfig, TravisFetch} from "./Travis";
+import {BambooConfig, BambooFetch} from "./Bamboo";
+import {BuildStatus} from "bwatch-common";
+import {Config} from "./Config";
 
 export type BuildConfig
-    = { tag: "bamboo", conf: BambooConfig }
-    | { tag: "travis", conf: TravisConfig };
+    = BambooBuildConfig
+    | TravisBuildConfig
 
+interface BambooBuildConfig {
+    tag: "bamboo"
+    conf: BambooConfig
+}
+
+interface TravisBuildConfig {
+    tag: "travis"
+    conf: TravisConfig
+}
 
 export class CIClient {
 
