@@ -21,7 +21,7 @@ function getAccessToken(uuid: string, serverUrl: string, githubToken: string): P
         .then(obj => {
             const accessToken = obj.access_token;
             if (!accessToken) {
-                return error("No access token");
+                return error("No access token found in auth response");
             }
             console.log(uuid, "access token obtained", accessToken)
             return accessToken;
@@ -93,9 +93,9 @@ export class TravisFetch extends Fetch<TravisConfig> {
                 getBuildStatus(uuid, token, config)
                     .then(onResult)
             })
-            .catch(e =>
-                onResult(error(e))
-            )
+            .catch(e => {
+                onResult(error("error while authenticating : " + e));
+            })
     }
 
     cancel(): void {
