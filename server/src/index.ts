@@ -3,6 +3,7 @@ import * as WebSocket from "ws";
 import * as http from 'http';
 
 import {Build, BuildConfig, CIClient} from "./ciclient/CIClient";
+import {BuildInfo} from "bwatch-common/dist/BuildInfo";
 
 // const DTX: BuildConfig = {
 //     tag: "bamboo",
@@ -12,11 +13,21 @@ import {Build, BuildConfig, CIClient} from "./ciclient/CIClient";
 //     }
 // };
 
-const intellirule: BuildConfig = {
+const diesel2: BuildConfig = {
     tag: "travis",
     conf: {
         serverUrl: "https://travis.ibm.com",
         repository: "VANKEISB/diesel2",
+        branch: "develop",
+        githubToken: process.env.GITHUB_TOKEN || ''
+    }
+};
+
+const intellirule: BuildConfig = {
+    tag: "travis",
+    conf: {
+        serverUrl: "https://travis.ibm.com",
+        repository: "dba/intellirule",
         branch: "develop",
         githubToken: process.env.GITHUB_TOKEN || ''
     }
@@ -50,26 +61,18 @@ wss.on('connection', (ws: WebSocket) => {
     })
 })
 
-const ciClient = new CIClient([ intellirule ], build => {
-    console.log("====>>>> build updated, notifying " + sockets.length + " client(s)", build.uuid, build.status)
+const ciClient = new CIClient([ intellirule, diesel2 ], build => {
+    const bi = JSON.stringify(toBuildInfo(build))
     sockets.forEach(ws => {
-        ws.send(JSON.stringify(buildToMsg(build)));
+        ws.send(bi);
     })
 });
 ciClient.list().forEach(b => b.start());
 
 
-function buildToMsg(build: Build): any {
-    const { uuid, status } = build;
-    return {
-        uuid,
-        status
-    }
-}
-
 function allBuildsToMsg(): any {
     return {
-        builds: ciClient.list().map(buildToMsg)
+        builds: ciClient.list().map(toBuildInfo)
     }
 }
 
@@ -80,3 +83,30 @@ app.use("/api", (req, res) => {
 server.listen(4000, () => {
     console.log("server started")
 })
+
+function toBuildInfo(build: Build): BuildInfo {
+    const { config, uuid, status } = build;
+    switch (config.tag) {
+        case "travis": {
+            return {
+                uuid,
+                status,
+                info: {
+                    tag: "travis",
+                    branch: config.conf.branch,
+                    repository: config.conf.repository,
+                }
+            }
+        }
+        case "bamboo": {
+            return {
+                uuid,
+                status,
+                info: {
+                    tag: "bamboo",
+                    plan: config.conf.plan,
+                }
+            }
+        }
+    }
+}

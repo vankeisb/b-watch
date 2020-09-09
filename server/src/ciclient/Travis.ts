@@ -62,9 +62,14 @@ function getBuildStatus(uuid: string, accessToken: string, config: TravisConfig)
                 }
                 console.error(uuid, "unhandled build state", obj);
                 return error("unhanlded state " + state);
+            } else {
+                const error_message = obj.error_message;
+                if (error_message) {
+                    return error(error_message);
+                }
             }
             console.error(uuid, "unable to parse", obj);
-            return error("last build not found");
+            return error("unable to parse response");
         });
 }
 

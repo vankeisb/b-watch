@@ -1,78 +1,41 @@
-import {Cmd, Decode as D, Decoder, Http, Maybe, noCmd, nothing, Result, Sub, Task, Dispatcher, just} from "react-tea-cup";
+import {
+    Cmd,
+    Decode as D,
+    Decoder,
+    Dispatcher,
+    Http,
+    just,
+    Maybe,
+    noCmd,
+    nothing,
+    Result,
+    Sub,
+    Task
+} from "react-tea-cup";
 import React from "react";
-import {BuildStatus, BuildStatusNone} from "bwatch-common";
+import {Msg} from "./Msg";
+import {ListResponse, ListResponseDecoder} from "bwatch-common";
+import {ViewBuildInfo, ViewStatus} from "./ViewBuildInfo";
 
 export interface Model {
-    readonly builds: Maybe<Result<string,ListBuildsResponse>>;
+    readonly builds: Maybe<Result<string,ListResponse>>;
 }
 
-export interface Build {
-    readonly uuid: string;
-    readonly status: BuildStatus;
-}
-
-
-export type Msg
-    = { tag: "got-builds"; r: Result<string,ListBuildsResponse> };
-
-
-function gotBuilds(r: Result<string,ListBuildsResponse>): Msg {
+function gotBuilds(r: Result<string,ListResponse>): Msg {
     return {
         tag: "got-builds",
         r
     }
 }
 
-interface ListBuildsResponse {
-    readonly builds: ReadonlyArray<Build>
-}
-
-const BuildStatusDecoder: Decoder<BuildStatus> =
-    D.andThen(
-        tag => {
-            if (tag === "none") {
-                return D.succeed(BuildStatusNone);
-            }
-            if (tag === "green" || tag === "red") {
-                return D.map(
-                    url => ({tag, url}),
-                    D.field("url", D.str)
-                );
-            }
-            if (tag === "error") {
-                return D.map(
-                    err => ({tag, err}),
-                    D.field("err", D.str)
-                )
-            }
-            return D.fail("no such tag " + tag);
-        },
-        D.field("tag", D.str)
-    );
-
-
-const BuildDecoder: Decoder<Build> =
-    D.map2(
-        (uuid, status) => ({uuid, status}),
-        D.field("uuid", D.str),
-        D.field("status", BuildStatusDecoder)
-    );
-
-const ListBuildsResponseDecoder: Decoder<ListBuildsResponse> =
-    D.map(
-        builds => ({builds}),
-        D.field("builds", D.array(BuildDecoder))
-    );
-
-
 export function init(): [Model, Cmd<Msg>] {
     const model: Model = {
         builds: nothing
     };
-    const listBuilds: Task<string,ListBuildsResponse> =
+    const listBuilds: Task<string,ListResponse> =
         Http.jsonBody(
             Http.fetch('/api'),
-            ListBuildsResponseDecoder
+            ListResponseDecoder
         ).mapError(e => e.message);
     return [ model, Task.attempt(listBuilds, gotBuilds) ];
 }
@@ -81,12 +44,14 @@ export function view(dispatch: Dispatcher<Msg>, model: Model) {
     return model.builds
         .map(respRes =>
             respRes.match(
-                listBuildsResponse => (
+                listResponse => (
                     <>
-                        {listBuildsResponse.builds.map(build => (
-                                <li key={build.uuid}>{build.uuid}</li>
-                            )
-                        )}
+                        {listResponse.builds.map(build => (
+                            <div>
+                                <ViewStatus status={build.status} />
+                                <ViewBuildInfo key={build.uuid} dispatch={dispatch} buildInfo={build}/>
+                            </div>
+                        ))}
                     </>
                 ),
                 err => {
