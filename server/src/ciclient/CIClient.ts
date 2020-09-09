@@ -23,8 +23,9 @@ export class CIClient {
 
     private readonly builds: Build[];
 
-    constructor(configs: ReadonlyArray<BuildConfig>) {
-        this.builds = configs.map(c => new Build(c))
+    constructor(configs: ReadonlyArray<BuildConfig>,
+                private readonly listener: (build: Build) => void) {
+        this.builds = configs.map(c => new Build(c, listener))
         console.log("Initialized with " + this.builds.length + " build(s)")
     }
 
@@ -43,7 +44,8 @@ export class Build {
     private _pollTimeout: any;
     private _fetchCount: number;
 
-    constructor(private readonly _config: BuildConfig) {
+    constructor(private readonly _config: BuildConfig,
+                private readonly listener: (build: Build) => void) {
         this.uuid = uuid.v4();
         this._status = "none";
         this._polling = false;
@@ -72,8 +74,8 @@ export class Build {
                 console.warn(this.uuid, "fetch count dont match", this._fetchCount, fetchCount);
                 return;
             }
-            // TODO notify observers
             this._status = status;
+            this.listener(this);
             if (this._polling) {
                 console.log(this.uuid, "polling, will fetch again")
                 this._pollTimeout = setTimeout(() => {
