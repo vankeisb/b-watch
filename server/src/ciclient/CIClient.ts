@@ -17,7 +17,7 @@ export class CIClient {
     constructor(configs: ReadonlyArray<BuildConfig>,
                 private readonly listener: (build: Build) => void) {
         this.builds = configs.map(c => new Build(c, listener))
-        console.log("Initialized with " + this.builds.length + " build(s)")
+        console.log("Initialized with " + this.builds.length + " build configuration(s)")
     }
 
     list(): ReadonlyArray<Build> {
