@@ -5,13 +5,13 @@ import * as http from 'http';
 import {Build, BuildConfig, CIClient} from "./ciclient/CIClient";
 import {BuildInfo} from "bwatch-common/dist/BuildInfo";
 
-// const DTX: BuildConfig = {
-//     tag: "bamboo",
-//     conf: {
-//         serverUrl: "http://sfactory.francelab.fr.ibm.com:8085",
-//         plan: "TRUNK-DTXCRIT"
-//     }
-// };
+const dtx: BuildConfig = {
+    tag: "bamboo",
+    conf: {
+        serverUrl: "http://sfactory.francelab.fr.ibm.com:8085",
+        plan: "TRUNK-DTXCRIT"
+    }
+};
 
 const diesel2: BuildConfig = {
     tag: "travis",
@@ -61,7 +61,7 @@ wss.on('connection', (ws: WebSocket) => {
     })
 })
 
-const ciClient = new CIClient([ intellirule, diesel2 ], build => {
+const ciClient = new CIClient([ intellirule, diesel2, dtx ], build => {
     const bi = JSON.stringify(toBuildInfo(build))
     sockets.forEach(ws => {
         ws.send(bi);
