@@ -1,18 +1,9 @@
 import * as uuid from "uuid";
-
-export interface Config {}
-
-export interface BambooConfig extends Config {
-    readonly serverUrl: string;
-    readonly plan: string;
-}
-
-export interface TravisConfig extends Config {
-    readonly serverUrl: string;
-    readonly repository: string;
-    readonly branch: string;
-    readonly travisToken?: string;
-}
+import {Config} from "./Config";
+import {BuildStatus} from "./BuildStatus";
+import {Fetch} from "./Fetch";
+import {TravisConfig, TravisFetch} from "./Travis";
+import {BambooConfig, BambooFetch} from "./Bamboo";
 
 export type BuildConfig
     = { tag: "bamboo", conf: BambooConfig }
@@ -47,7 +38,7 @@ export class Build {
     constructor(private readonly _config: BuildConfig,
                 private readonly listener: (build: Build) => void) {
         this.uuid = uuid.v4();
-        this._status = "none";
+        this._status = {tag: "none"};
         this._polling = false;
         this._fetchCount = 0;
     }
@@ -76,8 +67,8 @@ export class Build {
             }
             this._status = status;
             this.listener(this);
+            delete this._fetch;
             if (this._polling) {
-                console.log(this.uuid, "polling, will fetch again")
                 this._pollTimeout = setTimeout(() => {
                     if (this._polling) {
                         this.fetch();
@@ -118,48 +109,3 @@ export class Build {
     }
 }
 
-
-export abstract class Fetch<C extends Config> {
-
-    constructor(
-        private uuid: string,
-        private readonly config: C,
-        private readonly onResult: (status: BuildStatus) => void) {
-    }
-
-    abstract cancel(): void;
-
-}
-
-
-export type BuildStatus = "none" | "passed" | "failed" | "error"
-
-class BambooFetch extends Fetch<BambooConfig> {
-
-    constructor(uuid: string, config: BambooConfig, onResult: (status: BuildStatus) => void) {
-        super(uuid, config, onResult);
-        console.log(uuid, "bamboo fetch")
-        setTimeout(() => {
-            console.log(uuid, "got fake result");
-            onResult(new Date().getTime() % 2 ? "passed" : "failed");
-        }, 5000)
-    }
-
-    cancel(): void {
-
-    }
-}
-
-class TravisFetch extends Fetch<TravisConfig> {
-    cancel(): void {
-    }
-    constructor(uuid: string, config: TravisConfig, onResult: (status: BuildStatus) => void) {
-        super(uuid, config, onResult);
-    }
-
-
-
-
-
-
-}
