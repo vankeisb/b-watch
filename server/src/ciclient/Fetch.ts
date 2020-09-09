@@ -1,5 +1,5 @@
 import {Config} from "./Config";
-import {BuildStatus} from "./BuildStatus";
+import {BuildStatus} from "bwatch-common";
 
 export abstract class Fetch<C extends Config> {
 

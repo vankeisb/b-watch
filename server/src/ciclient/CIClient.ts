@@ -1,9 +1,8 @@
 import * as uuid from "uuid";
-import {Config} from "./Config";
-import {BuildStatus} from "./BuildStatus";
+import {BambooConfig, BuildStatus, Config, TravisConfig} from "bwatch-common";
 import {Fetch} from "./Fetch";
-import {TravisConfig, TravisFetch} from "./Travis";
-import {BambooConfig, BambooFetch} from "./Bamboo";
+import {TravisFetch} from "./Travis";
+import {BambooFetch} from "./Bamboo";
 
 export type BuildConfig
     = { tag: "bamboo", conf: BambooConfig }

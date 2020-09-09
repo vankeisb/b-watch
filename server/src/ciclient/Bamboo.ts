@@ -1,6 +1,6 @@
-import {Config} from "./Config";
 import {Fetch} from "./Fetch";
-import {BuildStatus} from "./BuildStatus";
+import {Config} from "./Config";
+import {BuildStatus} from "bwatch-common";
 
 export interface BambooConfig extends Config {
     readonly serverUrl: string;

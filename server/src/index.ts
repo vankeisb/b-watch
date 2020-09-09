@@ -73,10 +73,10 @@ function allBuildsToMsg(): any {
     }
 }
 
-app.use("/", (req, res) => {
+app.use("/api", (req, res) => {
     res.send(JSON.stringify(allBuildsToMsg(), null, "  "));
 })
 
-server.listen(3000, () => {
+server.listen(4000, () => {
     console.log("server started")
 })

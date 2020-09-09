@@ -1,8 +1,7 @@
 import {Config} from "./Config";
 import {Fetch} from "./Fetch";
-import {BuildStatus, BuildStatusNone, error, green, red} from "./BuildStatus";
+import {BuildStatus, error, green, red} from "bwatch-common";
 import fetch from "node-fetch"
-import {Decoder, Err, Decode as D, Result} from "tea-cup-core";
 
 
 function getAccessToken(uuid: string, serverUrl: string, githubToken: string): Promise<string> {
@@ -20,7 +19,7 @@ function getAccessToken(uuid: string, serverUrl: string, githubToken: string): P
         .then(obj => {
             const accessToken = obj.access_token;
             if (!accessToken) {
-                return error(new Error("No access token"));
+                return error("No access token");
             }
             console.log(uuid, "access token obtained", accessToken)
             return accessToken;
@@ -62,10 +61,10 @@ function getBuildStatus(uuid: string, accessToken: string, config: TravisConfig)
                     return red(url);
                 }
                 console.error(uuid, "unhandled build state", obj);
-                return error(new Error("unhanlded state " + state));
+                return error("unhanlded state " + state);
             }
             console.error(uuid, "unable to parse", obj);
-            return error(new Error("last build not found"));
+            return error("last build not found");
         });
 }
 
@@ -86,9 +85,6 @@ export class TravisFetch extends Fetch<TravisConfig> {
             .then(token => {
                 getBuildStatus(uuid, token, config)
                     .then(onResult)
-                    .catch(e =>
-                        onResult(error(e))
-                    )
             })
             .catch(e =>
                 onResult(error(e))
