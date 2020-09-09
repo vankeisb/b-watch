@@ -1,0 +1,6 @@
+{
+  "name": "bwatch-parent",
+  "private": true,
+  "workspaces": ["common", "server", "frontend"]
+}
+

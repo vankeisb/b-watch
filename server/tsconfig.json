@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "inlineSources": true,
+    "inlineSourceMap": true,
+    "strict": true,
+    "module": "CommonJS",
+    "outDir": "dist",
+    "declaration": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "jsx": "react",
+    "jsxFactory": "myJSXcreateElement",
+    "jsxFragmentFactory": "MyJSXFragment",
+    "moduleResolution": "Node"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "src/test", "**/*.test.ts?", "**/*.spec.ts?"]
+}
