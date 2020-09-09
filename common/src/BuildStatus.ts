@@ -1,4 +1,4 @@
-import {Decode as D, Decoder} from "tea-cup-core";
+import {Decode as D, Decoder, just, Maybe, nothing} from "tea-cup-core";
 
 export type BuildStatus
     = { tag: "none" }
@@ -50,3 +50,13 @@ export const BuildStatusDecoder: Decoder<BuildStatus> =
         },
         D.field("tag", D.str)
     )
+
+export function getBuildUrl(status: BuildStatus): Maybe<string> {
+    switch (status.tag) {
+        case "green":
+        case "red":
+            return just(status.url);
+        default:
+            return nothing;
+    }
+}

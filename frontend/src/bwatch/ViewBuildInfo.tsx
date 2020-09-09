@@ -1,6 +1,6 @@
 import {Msg} from "./Msg";
-import {Dispatcher} from "react-tea-cup";
-import {BuildInfo, BuildStatus} from "bwatch-common";
+import {Dispatcher, Maybe, str} from "react-tea-cup";
+import {BuildInfo, BuildStatus, getBuildUrl} from "bwatch-common";
 import * as React from "react";
 
 export interface ViewBuildInfoProps {
@@ -28,22 +28,25 @@ export function ViewStatus(props: {status: BuildStatus}) {
 
 export function ViewBuildInfo(props: ViewBuildInfoProps) {
     const { dispatch, buildInfo } = props;
-    const { info } = buildInfo;
+    const { info, status } = buildInfo;
+    const buildUrl = getBuildUrl(status);
     switch (info.tag) {
         case "bamboo": {
-            return (
-                <span>
-                    {info.plan} (Bamboo)
-                </span>
-            )
+            const text = info.plan + " (Bamboo)"
+            return buildUrl
+                .map(url => (
+                  <a href={url}>{text}</a>
+                ))
+                .withDefault(<span>{text}</span>);
         }
         case "travis": {
-            return (
-                <span>
-                    Repo : {info.repository}, branch {info.branch} (Travis)
-                </span>
-            )
+            const text = `Repo : ${info.repository}, branch ${info.branch} (Travis)`;
+            return buildUrl
+                .map(url => (
+                    <a href={url}>{text}</a>
+                ))
+                .withDefault(<span>{text}</span>);
         }
     }
-
 }
+

@@ -60,9 +60,9 @@ export function startServer(port: number, configs: ReadonlyArray<BuildConfig>) {
         res.send(JSON.stringify(allBuildsToMsg(), null, "  "));
     })
 
-    server.listen(port, () => {
-        console.log("server started")
-    })
+    server.listen(port, "localhost", () => {
+        console.log("server started on http://localhost:" + port)
+    });
 }
 
 

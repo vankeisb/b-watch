@@ -25,15 +25,16 @@ console.log("HTTP server port", port)
 console.log("Using builds from", buildsPath);
 
 // @ts-ignore
-const fillTemplate = function(templateString: string){
-    templateString = templateString.split("${").join("${this.");
+const evalTemplate = function(templateString: string){
     return new Function("return `"+templateString +"`;").call(process.env);
 }
 
 if (fs.existsSync(buildsPath)) {
 
     console.log("loading builds file and performing substitutions")
-    const text: string = fillTemplate(fs.readFileSync(buildsPath, 'utf-8'));
+    const text: string = evalTemplate(fs.readFileSync(buildsPath, 'utf-8'));
+
+    console.log("DDD", text)
 
     const configDecoder =
         D.map(

@@ -94,7 +94,8 @@ export class TravisFetch extends Fetch<TravisConfig> {
                     .then(onResult)
             })
             .catch(e => {
-                onResult(error("error while authenticating : " + e));
+                console.error("auth error", e);
+                onResult(error("error while authenticating"));
             })
     }
 
