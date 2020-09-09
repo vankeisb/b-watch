@@ -1,6 +1,7 @@
 import {Fetch} from "./Fetch";
 import {Config} from "./Config";
 import {BuildStatus} from "bwatch-common";
+import {Decode as D, Decoder} from "tea-cup-core";
 
 export interface BambooConfig extends Config {
     readonly serverUrl: string;
@@ -22,3 +23,11 @@ export class BambooFetch extends Fetch<BambooConfig> {
 
     }
 }
+
+export const BambooConfigDecoder: Decoder<BambooConfig> =
+    D.map2(
+        (serverUrl, plan) => ({ serverUrl, plan}),
+        D.field("serverUrl", D.str),
+        D.field("plan", D.str)
+    );
+

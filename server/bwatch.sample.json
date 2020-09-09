@@ -1,0 +1,21 @@
+{
+  "builds": [
+    {
+      "tag": "bamboo",
+      "serverUrl": "http://sfactory.francelab.fr.ibm.com:8085",
+      "plan": "TRUNK-DTXCRIT"
+    },{
+      "tag": "travis",
+      "serverUrl": "https://travis.ibm.com",
+      "repository": "VANKEISB/diesel2",
+      "branch": "develop",
+      "githubToken": "${GITHUB_TOKEN}"
+    },{
+      "tag": "travis",
+      "serverUrl": "https://travis.ibm.com",
+      "repository": "dba/intellirule",
+      "branch": "develop",
+      "githubToken": "${GITHUB_TOKEN}"
+    }
+  ]
+}

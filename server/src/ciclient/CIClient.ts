@@ -1,20 +1,50 @@
 import * as uuid from "uuid";
 import {Fetch} from "./Fetch";
-import {TravisConfig, TravisFetch} from "./Travis";
-import {BambooConfig, BambooFetch} from "./Bamboo";
+import {TravisConfig, TravisConfigDecoder, TravisFetch} from "./Travis";
+import {BambooConfig, BambooConfigDecoder, BambooFetch} from "./Bamboo";
 import {BuildStatus} from "bwatch-common";
 import {Config} from "./Config";
+import {Decoder} from "tea-cup-core";
+import {Decode as D} from "tea-cup-core/dist/Decode";
 
 export type BuildConfig
     = BambooBuildConfig
     | TravisBuildConfig
 
-interface BambooBuildConfig {
+export interface BambooBuildConfig {
     tag: "bamboo"
     conf: BambooConfig
 }
 
-interface TravisBuildConfig {
+export const BambooBuildConfigDecoder: Decoder<BambooBuildConfig> =
+    D.map(
+        conf => ({tag: "bamboo", conf}),
+        BambooConfigDecoder
+    );
+
+export const TravisBuildConfigDecoder: Decoder<TravisBuildConfig> =
+    D.map(
+        conf => ({tag: "travis", conf}),
+        TravisConfigDecoder
+    );
+
+
+export const BuildConfigDecoder: Decoder<BuildConfig> =
+    D.andThen(
+        tag => {
+            switch (tag) {
+                case "bamboo":
+                    return BambooBuildConfigDecoder;
+                case "travis":
+                    return TravisBuildConfigDecoder;
+                default:
+                    return D.fail("unhandled tag " + tag);
+            }
+        },
+        D.field("tag", D.str)
+    );
+
+export interface TravisBuildConfig {
     tag: "travis"
     conf: TravisConfig
 }

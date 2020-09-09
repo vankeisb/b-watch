@@ -1,33 +1,67 @@
-import {BuildConfig} from "./ciclient/CIClient";
+#!/usr/bin/env node
+
+import {BuildConfigDecoder} from "./ciclient/CIClient";
 import {startServer} from "./server";
+import {Command} from "commander";
+import os from "os";
+import fs from "fs";
+import {Decode as D} from "tea-cup-core"
 
-const dtx: BuildConfig = {
-    tag: "bamboo",
-    conf: {
-        serverUrl: "http://sfactory.francelab.fr.ibm.com:8085",
-        plan: "TRUNK-DTXCRIT"
+const defaultPort = 4000;
+
+const program = new Command();
+program
+    .name("bwatch-server")
+    .description("bwatch daemon + http server")
+    .version("0.0.1")
+    .option("-b, --builds <path>", 'Path to the builds JSON file (defaults to ~/.bwatch.json)')
+    .option("-p, --port <port>", `Web server port (defaults to ${defaultPort})`)
+program.parse(process.argv);
+
+const port: number = program.port || defaultPort;
+const buildsPath = program.builds || os.homedir() + "/.bwatch.json";
+
+console.log("HTTP server port", port)
+console.log("Using builds from", buildsPath);
+
+// @ts-ignore
+const fillTemplate = function(templateString: string){
+    templateString = templateString.split("${").join("${this.");
+    return new Function("return `"+templateString +"`;").call(process.env);
+}
+
+if (fs.existsSync(buildsPath)) {
+
+    console.log("loading builds file and performing substitutions")
+    const text: string = fillTemplate(fs.readFileSync(buildsPath, 'utf-8'));
+
+    const configDecoder =
+        D.map(
+            builds => builds,
+            D.field("builds", D.array(BuildConfigDecoder))
+        );
+
+    const configs = configDecoder.decodeString(text);
+
+    switch (configs.tag) {
+        case "Ok": {
+            startServer(port, configs.value);
+            break;
+        }
+        case "Err": {
+            console.error("Unable to parse config file", configs.err);
+            process.exit(1);
+            break;
+        }
     }
-};
+} else {
+    console.error("No builds file found at " + buildsPath);
+    process.exit(1);
+}
 
-const diesel2: BuildConfig = {
-    tag: "travis",
-    conf: {
-        serverUrl: "https://travis.ibm.com",
-        repository: "VANKEISB/diesel2",
-        branch: "develop",
-        githubToken: process.env.GITHUB_TOKEN || ''
-    }
-};
 
-const intellirule: BuildConfig = {
-    tag: "travis",
-    conf: {
-        serverUrl: "https://travis.ibm.com",
-        repository: "dba/intellirule",
-        branch: "develop",
-        githubToken: process.env.GITHUB_TOKEN || ''
-    }
-};
 
-startServer([ intellirule, diesel2, dtx ]);
+
+
+//startServer([ intellirule, diesel2, dtx ]);
 

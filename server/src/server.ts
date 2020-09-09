@@ -5,7 +5,7 @@ import * as http from 'http';
 import {Build, BuildConfig, CIClient} from "./ciclient/CIClient";
 import {BuildInfo} from "bwatch-common/dist/BuildInfo";
 
-export function startServer(configs: ReadonlyArray<BuildConfig>) {
+export function startServer(port: number, configs: ReadonlyArray<BuildConfig>) {
 
     const app = express();
 
@@ -41,8 +41,14 @@ export function startServer(configs: ReadonlyArray<BuildConfig>) {
             ws.send(bi);
         })
     });
-    ciClient.list().forEach(b => b.start());
 
+    const builds = ciClient.list();
+    console.log("Loaded builds :")
+    builds.forEach(b => console.log(b.uuid, toBuildInfo(b).info));
+    console.log("Starting to poll")
+    builds.forEach(b => {
+        b.start()
+    });
 
     function allBuildsToMsg(): any {
         return {
@@ -54,7 +60,7 @@ export function startServer(configs: ReadonlyArray<BuildConfig>) {
         res.send(JSON.stringify(allBuildsToMsg(), null, "  "));
     })
 
-    server.listen(4000, () => {
+    server.listen(port, () => {
         console.log("server started")
     })
 }

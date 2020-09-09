@@ -2,6 +2,8 @@ import {Config} from "./Config";
 import {Fetch} from "./Fetch";
 import {BuildStatus, error, green, red} from "bwatch-common";
 import fetch from "node-fetch"
+import {Decoder} from "tea-cup-core";
+import {Decode as D} from "tea-cup-core";
 
 
 function getAccessToken(uuid: string, serverUrl: string, githubToken: string): Promise<string> {
@@ -100,4 +102,14 @@ export class TravisFetch extends Fetch<TravisConfig> {
         this._canceled = true;
     }
 }
+
+export const TravisConfigDecoder: Decoder<TravisConfig> =
+    D.map4(
+        (serverUrl, repository, branch, githubToken) => ({ serverUrl, repository, branch, githubToken }),
+        D.field("serverUrl", D.str),
+        D.field("repository", D.str),
+        D.field("branch", D.str),
+        D.field("githubToken", D.str)
+    );
+
 
