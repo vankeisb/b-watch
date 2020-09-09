@@ -17,7 +17,7 @@ const intellirule: BuildConfig = {
     conf: {
         serverUrl: "https://travis.ibm.com",
         repository: "VANKEISB/diesel2",
-        branch: "feature/json-providers",
+        branch: "develop",
         githubToken: process.env.GITHUB_TOKEN || ''
     }
 };

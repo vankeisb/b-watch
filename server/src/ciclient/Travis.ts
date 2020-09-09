@@ -28,11 +28,13 @@ function getAccessToken(uuid: string, serverUrl: string, githubToken: string): P
 }
 
 function getBuildStatus(uuid: string, accessToken: string, config: TravisConfig): Promise<BuildStatus> {
+    const encodedRepo = encodeURIComponent(config.repository);
+    const encodedBranch = encodeURIComponent(config.branch);
     const url = config.serverUrl +
         "/api/repo/" +
-        encodeURIComponent(config.repository) +
+        encodedRepo +
         "/branch/" +
-        encodeURIComponent(config.branch);
+        encodedBranch;
     console.log(uuid, "fetching build status", url);
     return fetch(url, {
             headers:{
@@ -46,15 +48,18 @@ function getBuildStatus(uuid: string, accessToken: string, config: TravisConfig)
         .then(r => r.json())
         .then(obj => {
             const { last_build } = obj;
+            // console.log("obj", obj);
             if (last_build) {
                 let state = last_build.state;
+                let buildId = last_build.id;
+                let url = config.serverUrl + "/" + config.repository + "/builds/" + buildId;
                 if (state === "started") {
                     state = state.previous_state;
                 }
                 if (state === "passed") {
-                    return green("TODO");
+                    return green(url);
                 } else if (state === "failed") {
-                    return red("TODO");
+                    return red(url);
                 }
                 console.error(uuid, "unhandled build state", obj);
                 return error(new Error("unhanlded state " + state));
