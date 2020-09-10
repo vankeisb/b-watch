@@ -1,0 +1,16 @@
+language: node_js
+node_js:
+  - 'lts/dubnium'
+
+install:
+  - yarn install
+
+script:
+  - ./build.sh
+
+deploy:
+  provider: script
+  script: ./deploy.sh
+  skip_cleanup: true
+  on:
+    branch: feature/test-release
