@@ -1,0 +1,83 @@
+@import "~bootstrap/dist/css/bootstrap.min.css";
+
+#root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    overflow: hidden;
+}
+
+.bwatch {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.bwatch h1 {
+    width: 100%;
+    background-color: lightgray;
+    padding-left: 1rem;
+}
+
+.bwatch .content {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.scroll-pane {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+}
+
+.bwatch .builds {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    display: inline-flex;
+    gap: 1rem;
+}
+
+.bwatch .builds .card {
+    width: 18rem;
+    gap: 12px;
+}
+
+.bwatch .builds .card .status {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.bwatch .builds .card .badge {
+    margin-right: 0.5rem;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.bwatch .builds .card .card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.bwatch .builds .card .card-body .error-text {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.bwatch .builds .card .spacer {
+    flex-grow: 1;
+}
+
+

@@ -18,7 +18,7 @@ export function init(api: Api): [Model, Cmd<Msg>] {
 function viewPage(content: React.ReactNode) {
     return (
         <div className="bwatch">
-            <h1>b-watch</h1>
+            <h1 className="brand">b-watch</h1>
             <div className="content">
                 <div className="scroll-pane">
                     {content}
