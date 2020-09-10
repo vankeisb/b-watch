@@ -22,10 +22,17 @@ function createWindow() {
         icon,
     });
 
+    const dev = process.env.BW_ENV === "dev";
+
     win.removeMenu();
+    // win.webContents.openDevTools();
 
     // and load the index.html of the app.
-    win.loadFile('index.html');
+    // TODO file not at the same location when app is packaged
+    const filePath = dev
+        ? "index.html"
+        : "build/index.html";
+    win.loadFile(filePath);
 
     win.on('minimize', event => {
         event.preventDefault();

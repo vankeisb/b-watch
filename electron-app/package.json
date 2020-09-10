@@ -1,25 +1,40 @@
 {
   "name": "bwatch-app",
+  "productName": "bwatch",
   "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
+  "main": "build/electron.js",
+  "description": "build monitoring app",
+  "author": "remi@rvkb.com",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:vankeisb/b-watch.git"
+  },
   "scripts": {
-    "clean": "rimraf dist",
-    "build": "npm run clean && webpack --config ./webpack.config.js",
-    "start": "npm run build && electron ./dist/electron.js"
+    "clean": "rimraf build dist",
+    "compile": "webpack --config ./webpack.config.js",
+    "start": "cross-env BW_ENV=dev electron ./build/electron.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "bwatch",
+    "files": [
+      "build/**/*"
+    ]
   },
   "keywords": [],
-  "author": "remi@rvkb.com",
   "license": "MIT",
   "devDependencies": {
     "bwatch-common-front": "0.0.1",
     "bwatch-daemon": "0.0.1",
-    "electron": "^10.1.1",
+    "cross-env": "^7.0.2",
+    "electron": "10.1.1",
+    "electron-builder": "^22.8.0",
     "html-webpack-plugin": "^4.4.1",
+    "react-tea-cup": "^1.0.2",
     "ts-loader": "^8.0.3",
     "typescript": "^4.0.2",
     "webpack": "^4.44.1",
-    "webpack-cli": "^3.3.12",
-    "react-tea-cup": "^1.0.2"
+    "webpack-cli": "^3.3.12"
   }
 }
