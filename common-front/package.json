@@ -1,12 +1,11 @@
 {
-  "name": "bwatch-frontend-common",
+  "name": "bwatch-common-front",
   "version": "0.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.3",
     "react-tea-cup": "^1.0.2",
     "bwatch-common": "0.0.1"
   },

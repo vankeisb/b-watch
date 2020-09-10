@@ -16,7 +16,7 @@
     "react-scripts": "3.4.3",
     "react-tea-cup": "^1.0.2",
     "typescript": "~3.7.2",
-    "bwatch-common": "0.0.1"
+    "bwatch-common-front": "0.0.1"
   },
   "scripts": {
     "start": "react-scripts start",

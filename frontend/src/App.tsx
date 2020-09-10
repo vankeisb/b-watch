@@ -1,8 +1,7 @@
 import React from 'react';
 import './App.css';
 import {DevTools, Program, withReduxDevTools} from "react-tea-cup";
-import {Model, init, view, update, subscriptions } from "./bwatch/BWatch";
-import {Msg} from "./bwatch/Msg";
+import {Model, init, view, update, subscriptions, Msg } from "bwatch-common-front";
 
 export const App = () => {
   return (
