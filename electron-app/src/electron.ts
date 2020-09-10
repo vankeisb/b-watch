@@ -1,5 +1,5 @@
-import { app, BrowserWindow } from 'electron';
-import {loadConfigsFromFile} from "bwatch-daemon";
+import {app, BrowserWindow} from 'electron';
+import {createServerFromArgs} from "bwatch-daemon";
 import chalk from "chalk";
 
 function createWindow () {
@@ -18,10 +18,22 @@ function createWindow () {
 
 app.on('ready', createWindow);
 
-console.log(chalk.green("Starting bwatch app"));
+const server = createServerFromArgs({
+    port: 4000,
+    buildsPath: "../bwatch.sample.json"
+});
 
-// TODO
-//const configs = loadConfigsFromFile("../../bwatch.sample.json");
+switch (server.tag) {
+    case "Ok": {
+        server.value.start();
+        break;
+    }
+    case "Err": {
+        console.log(chalk.red(server.err));
+        app.exit(1);
+        break;
+    }
+}
 
 //
 // const ciClient: CIClient = new CIClient()
