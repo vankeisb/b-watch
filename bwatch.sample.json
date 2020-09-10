@@ -1,4 +1,5 @@
 {
+  "pollingInterval": 30000,
   "builds": [
     {
       "tag": "bamboo",

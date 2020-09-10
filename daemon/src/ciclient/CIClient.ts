@@ -12,9 +12,10 @@ export class CIClient {
     private readonly builds: Build[];
 
     constructor(readonly config: Configuration,
-                private readonly listener: (build: Build) => void) {
-        this.builds = config.builds.map(c => new Build(c, listener))
-        console.log("Initialized with", chalk.green(this.builds.length) + " build configuration(s)")
+                private readonly _listener: (build: Build) => void) {
+        this.builds = config.builds.map(c => new Build(c, config.pollingInterval, _listener))
+        console.log("Initialized with", chalk.green(this.builds.length) + " build configuration(s)");
+        console.log("Polling interval", chalk.green(config.pollingInterval), "ms");
     }
 
     list(): ReadonlyArray<Build> {
@@ -33,7 +34,8 @@ export class Build {
     private _fetchCount: number;
 
     constructor(private readonly _config: BuildConfig,
-                private readonly listener: (build: Build) => void) {
+                private readonly _pollingInterval: number,
+                private readonly _listener: (build: Build) => void) {
         this.uuid = uuid.v4();
         this._status = {tag: "none"};
         this._polling = false;
@@ -63,7 +65,7 @@ export class Build {
                 return;
             }
             this._status = status;
-            this.listener(this);
+            this._listener(this);
             delete this._fetch;
             if (this._polling) {
                 this._pollTimeout = setTimeout(() => {
