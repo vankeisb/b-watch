@@ -1,6 +1,6 @@
 {
   "name": "bwatch-parent",
   "private": true,
-  "workspaces": ["common", "server", "frontend"]
+  "workspaces": ["common", "server", "frontend", "electron-app"]
 }
 
