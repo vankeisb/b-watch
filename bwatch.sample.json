@@ -13,6 +13,12 @@
     },{
       "tag": "travis",
       "serverUrl": "https://travis.ibm.com",
+      "repository": "VANKEISB/diesel2",
+      "branch": "feature/json-providers",
+      "githubToken": "${process.env.GITHUB_TOKEN}"
+    },{
+      "tag": "travis",
+      "serverUrl": "https://travis.ibm.com",
       "repository": "dba/intellirule",
       "branch": "develop",
       "githubToken": "${process.env.GITHUB_TOKEN}"

@@ -15,30 +15,43 @@ export function init(api: Api): [Model, Cmd<Msg>] {
     return [ model, Task.attempt(api.list(), gotBuilds) ];
 }
 
+function viewPage(content: React.ReactNode) {
+    return (
+        <div className="bwatch">
+            <h1>b-watch</h1>
+            <div className="content">
+                <div className="scroll-pane">
+                    {content}
+                </div>
+            </div>
+        </div>
+    )
+}
+
 export function view(dispatch: Dispatcher<Msg>, model: Model) {
-    return model.listResponse
-        .map(respRes =>
-            respRes.match(
-                listResponse => (
-                    <>
-                        {listResponse.builds.map(build => (
-                            <div key={build.uuid}>
-                                <ViewStatus status={build.status} />
+
+    return viewPage(
+        model.listResponse
+            .map(respRes =>
+                respRes.match(
+                    listResponse => (
+                        <div className="builds">
+                            {listResponse.builds.map(build => (
                                 <ViewBuildInfo key={build.uuid} dispatch={dispatch} buildInfo={build}/>
-                            </div>
-                        ))}
-                    </>
-                ),
-                err => {
-                    return (
-                        <p>Error : {err}</p>
-                    )
-                }
+                            ))}
+                        </div>
+                    ),
+                    err => {
+                        return (
+                            <p>Error : {err}</p>
+                        )
+                    }
+                )
             )
-        )
-        .withDefaultSupply(() => (
-            <p>Loading...</p>
-        ));
+            .withDefaultSupply(() => (
+                <p>Loading...</p>
+            ))
+    );
 }
 
 function noCmd(model: Model): [Model,Cmd<Msg>] {
