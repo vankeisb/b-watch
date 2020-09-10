@@ -18,5 +18,5 @@ ReactDOM.render(
         subscriptions={() => subscriptions(ws)}
         devTools={withReduxDevTools(DevTools.init<Model, Msg>(window))}
     />,
-    document.getElementById('app')
+    document.getElementById('root')
 );
