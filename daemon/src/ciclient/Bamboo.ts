@@ -2,6 +2,7 @@ import {Fetch} from "./Fetch";
 import {Config} from "./Config";
 import {BuildStatus} from "bwatch-common";
 import {Decode as D, Decoder} from "tea-cup-core";
+import chalk from "chalk";
 
 export interface BambooConfig extends Config {
     readonly serverUrl: string;
@@ -14,7 +15,7 @@ export class BambooFetch extends Fetch<BambooConfig> {
         super(uuid, config, onResult);
         console.log(uuid, "bamboo fetch")
         setTimeout(() => {
-            console.log(uuid, "BAMBOO TODO !!!");
+            console.log(uuid, chalk.red("BAMBOO TODO !!!"));
             onResult({ tag : "none"} );
         }, 5000)
     }

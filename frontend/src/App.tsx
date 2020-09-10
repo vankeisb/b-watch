@@ -6,6 +6,7 @@ import {Api} from "bwatch-common";
 import {RemoteApi} from "bwatch-common/dist/RemoteApi";
 
 const api: Api = new RemoteApi();
+const ws: WebSocket = new WebSocket("ws://localhost:4000");
 
 export const App = () => {
   return (
@@ -13,7 +14,7 @@ export const App = () => {
       init={() => init(api)}
       view={view}
       update={update}
-      subscriptions={subscriptions}
+      subscriptions={() => subscriptions(ws)}
       devTools={withReduxDevTools(DevTools.init<Model, Msg>(window))}
     />
   );

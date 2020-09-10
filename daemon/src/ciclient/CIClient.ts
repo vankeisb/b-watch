@@ -6,6 +6,8 @@ import {BuildStatus} from "bwatch-common";
 import {Config} from "./Config";
 import {Decoder} from "tea-cup-core";
 import {Decode as D} from "tea-cup-core/dist/Decode";
+import chalk from "chalk";
+
 
 export type BuildConfig
     = BambooBuildConfig
@@ -56,7 +58,7 @@ export class CIClient {
     constructor(configs: ReadonlyArray<BuildConfig>,
                 private readonly listener: (build: Build) => void) {
         this.builds = configs.map(c => new Build(c, listener))
-        console.log("Initialized with " + this.builds.length + " build configuration(s)")
+        console.log("Initialized with", chalk.green(this.builds.length) + " build configuration(s)")
     }
 
     list(): ReadonlyArray<Build> {
