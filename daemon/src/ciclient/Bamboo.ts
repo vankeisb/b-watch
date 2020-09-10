@@ -16,7 +16,7 @@ export class BambooFetch extends Fetch<BambooConfig> {
         console.log(uuid, "bamboo fetch")
         setTimeout(() => {
             console.log(uuid, chalk.red("BAMBOO TODO !!!"));
-            onResult({ tag : "none"} );
+            onResult({ tag : "error", err: "Bamboo is not yet implemented blah blah"} );
         }, 5000)
     }
 

@@ -70,6 +70,12 @@
   flex-direction: column;
 }
 
+.bwatch .builds .card .card-body .error-text {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
 .bwatch .builds .card .spacer {
   flex-grow: 1;
 }

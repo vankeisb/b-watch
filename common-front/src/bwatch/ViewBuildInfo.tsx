@@ -12,7 +12,14 @@ export function ViewStatus(props: {status: BuildStatus}) {
     const { status } = props;
     switch (status.tag) {
         case "error": {
-            return <span>Error : {status.err}</span>
+            return <>
+                <span className="badge badge-warning">
+                    ERROR
+                </span>
+                <span className="error-text" title={status.err}>
+                    {status.err}
+                </span>
+            </>;
         }
         case "green": {
             return <span className="badge badge-success">PASSING</span>;
@@ -21,10 +28,7 @@ export function ViewStatus(props: {status: BuildStatus}) {
             return <span className="badge badge-danger">FAILED</span>;
         }
         case "none": {
-            return <>
-                <span className="badge badge-secondary">ERROR</span>
-                <span>check the logs !</span>
-            </>;
+            return <span className="badge badge-secondary">LOADING...</span>;
         }
     }
 }
