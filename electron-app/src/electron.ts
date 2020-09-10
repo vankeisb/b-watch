@@ -3,8 +3,6 @@ import {createServerFromArgs} from "bwatch-daemon";
 import chalk from "chalk";
 import * as path from "path";
 
-//import css from "index.css"
-
 function createWindow() {
     const icons = {
         'linux': 'iconTemplateWhite.png',
@@ -15,7 +13,7 @@ function createWindow() {
 
     // Create the browser window.
     const win = new BrowserWindow({
-        width: 800,
+        width: 400,
         height: 600,
         webPreferences: {
             nodeIntegration: true
@@ -27,7 +25,7 @@ function createWindow() {
     const dev = process.env.BW_ENV === "dev";
 
     win.removeMenu();
-    win.webContents.openDevTools();
+    // win.webContents.openDevTools();
 
     // and load the index.html of the app.
     // TODO file not at the same location when app is packaged

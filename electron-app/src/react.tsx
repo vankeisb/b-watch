@@ -7,6 +7,7 @@ import {init, Model, Msg, subscriptions, update, view} from "bwatch-common-front
 
 import "bwatch-common-front/bwatch.css";
 
+
 const api: Api = new RemoteApi("http://localhost:4000/api");
 const ws: WebSocket = new WebSocket("ws://localhost:4000");
 
