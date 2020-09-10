@@ -1,5 +1,5 @@
 import {Msg} from "./Msg";
-import {Dispatcher, Maybe, str} from "react-tea-cup";
+import {Dispatcher} from "react-tea-cup";
 import {BuildInfo, BuildStatus, getBuildUrl} from "bwatch-common";
 import * as React from "react";
 
@@ -27,7 +27,7 @@ export function ViewStatus(props: {status: BuildStatus}) {
 }
 
 export function ViewBuildInfo(props: ViewBuildInfoProps) {
-    const { dispatch, buildInfo } = props;
+    const { buildInfo } = props;
     const { info, status } = buildInfo;
     const buildUrl = getBuildUrl(status);
     switch (info.tag) {

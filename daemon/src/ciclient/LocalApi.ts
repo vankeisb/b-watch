@@ -11,9 +11,11 @@ export class LocalApi implements Api {
     list(): Task<string, ListResponse> {
         return Task.fromLambda(() => {
             const builds = this.ciClient.list().map(toBuildInfo);
-            return {
+            const listResponse: ListResponse = {
+                tag: "list-response",
                 builds
             };
+            return listResponse;
         }).mapError(e => e.message);
     }
 
@@ -24,6 +26,7 @@ export function toBuildInfo(build: Build): BuildInfo {
     switch (config.tag) {
         case "travis": {
             return {
+                tag: "build-info",
                 uuid,
                 status,
                 info: {
@@ -35,6 +38,7 @@ export function toBuildInfo(build: Build): BuildInfo {
         }
         case "bamboo": {
             return {
+                tag: "build-info",
                 uuid,
                 status,
                 info: {

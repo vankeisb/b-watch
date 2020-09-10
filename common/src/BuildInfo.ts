@@ -1,7 +1,8 @@
 import {BuildStatus, BuildStatusDecoder} from "./BuildStatus";
-import {Decoder, Decode as D } from "tea-cup-core";
+import {Decoder, Decode as D} from "tea-cup-core";
 
 export interface BuildInfo {
+    readonly tag: "build-info";
     readonly uuid: string;
     readonly info: Info;
     readonly status: BuildStatus;
@@ -30,7 +31,7 @@ export const BambooInfoDecoder: Decoder<BambooInfo> =
 
 export const TravisInfoDecoder: Decoder<TravisInfo> =
     D.map2(
-        (repository, branch) => ({tag: "travis", repository, branch }),
+        (repository, branch) => ({tag: "travis", repository, branch}),
         D.field("repository", D.str),
         D.field("branch", D.str)
     );
@@ -52,7 +53,7 @@ export const InfoDecoder: Decoder<Info> =
 
 export const BuildInfoDecoder: Decoder<BuildInfo> =
     D.map3(
-        (uuid, info, status) => ({uuid, info, status}),
+        (uuid, info, status) => ({tag: "build-info", uuid, info, status}),
         D.field("uuid", D.str),
         D.field("info", InfoDecoder),
         D.field("status", BuildStatusDecoder)

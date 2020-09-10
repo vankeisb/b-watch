@@ -8,12 +8,19 @@ import {LocalApi, toBuildInfo} from "./LocalApi";
 export class Server {
 
     private readonly ciClient: CIClient;
+    private sockets: WebSocket[] = [];
+
     constructor(
         readonly port: number,
         readonly configs: ReadonlyArray<BuildConfig>
-        ) {
+    ) {
         this.ciClient = new CIClient(configs, b => {
-           // TODO notify websockets
+            // notify connected sockets
+            this.sockets.forEach(ws =>
+                ws.send(
+                    JSON.stringify(toBuildInfo(b), null, "  ")
+                )
+            );
         });
     }
 
@@ -21,35 +28,19 @@ export class Server {
         const app = express();
         const server = http.createServer(app);
         const wss = new WebSocket.Server({server});
+        const api = new LocalApi(this.ciClient);
 
-        let sockets: WebSocket[] = [];
 
         wss.on('connection', (ws: WebSocket) => {
+            // add to connected sockets
+            this.sockets.push(ws);
 
-            sockets.push(ws);
-
-            //connection is up, let's add a simple simple event
-            ws.on('message', (message: string) => {
-                if (message === "list") {
-
-                }
-
-            });
-
-            //send immediatly a feedback to the incoming connection
-            ws.send('Hi there, I am a WebSocket server');
-
-            ws.on("close", code => {
-                sockets = sockets.filter(s => s !== ws);
+            // remove on close
+            ws.on("close", () => {
+                this.sockets = this.sockets.filter(s => s !== ws);
             })
-        })
+        });
 
-        // const ciClient = new CIClient(configs, build => {
-        //     const bi = JSON.stringify(toBuildInfo(build))
-        //     sockets.forEach(ws => {
-        //         ws.send(bi);
-        //     })
-        // });
 
         const builds = this.ciClient.list();
         console.log("Loaded builds :")
@@ -58,7 +49,7 @@ export class Server {
         builds.forEach(b => b.start());
 
         app.use("/api", (req, res) => {
-            const api = new LocalApi(this.ciClient);
+
             api.list().execute(r => {
                 switch (r.tag) {
                     case "Err": {
@@ -82,9 +73,5 @@ export class Server {
 
     }
 
-
-}
-
-export function startServer(port: number, configs: ReadonlyArray<BuildConfig>) {
 
 }
