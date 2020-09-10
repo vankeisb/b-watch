@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import {BuildConfigDecoder} from "./ciclient/CIClient";
-import {startServer} from "./server";
+import {Server} from "./ciclient/Server";
 import {Command} from "commander";
 import os from "os";
 import fs from "fs";
@@ -46,7 +46,8 @@ if (fs.existsSync(buildsPath)) {
 
     switch (configs.tag) {
         case "Ok": {
-            startServer(port, configs.value);
+            const server = new Server(port, configs.value)
+            server.start();
             break;
         }
         case "Err": {

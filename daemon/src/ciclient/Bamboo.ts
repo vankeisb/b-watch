@@ -14,7 +14,7 @@ export class BambooFetch extends Fetch<BambooConfig> {
         super(uuid, config, onResult);
         console.log(uuid, "bamboo fetch")
         setTimeout(() => {
-            console.log(uuid, "got fake result");
+            console.log(uuid, "BAMBOO TODO !!!");
             onResult({ tag : "none"} );
         }, 5000)
     }
