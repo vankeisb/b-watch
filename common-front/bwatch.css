@@ -37,6 +37,7 @@
 }
 
 .bwatch .builds {
+    padding-top: 1rem;
     padding-left: 1rem;
     padding-right: 1rem;
     flex-direction: row;
@@ -80,4 +81,7 @@
     flex-grow: 1;
 }
 
+.bwatch .error {
+    padding: 1rem;
+}
 

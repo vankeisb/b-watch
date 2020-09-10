@@ -64,6 +64,8 @@ function createWindow() {
     tray.setContextMenu(contextMenu)
 }
 
+app.on('ready', createWindow);
+
 const server = createServerFromArgs({
     port: 4000,
     buildsPath: "../bwatch.sample.json"
@@ -71,9 +73,7 @@ const server = createServerFromArgs({
 
 switch (server.tag) {
     case "Ok": {
-        server.value.start(() => {
-            app.on('ready', createWindow);
-        });
+        // server.value.start();
         break;
     }
     case "Err": {

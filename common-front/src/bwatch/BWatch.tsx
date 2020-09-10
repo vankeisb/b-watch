@@ -18,7 +18,6 @@ export function init(api: Api): [Model, Cmd<Msg>] {
 function viewPage(content: React.ReactNode) {
     return (
         <div className="bwatch">
-            <h1 className="brand">b-watch</h1>
             <div className="content">
                 <div className="scroll-pane">
                     {content}
@@ -43,7 +42,15 @@ export function view(dispatch: Dispatcher<Msg>, model: Model) {
                     ),
                     err => {
                         return (
-                            <p>Error : {err}</p>
+                            <div className="error">
+                                <div className="alert alert-danger">
+                                    <strong>Error!</strong> {err}
+                                </div>
+                                <button className="button button-primary">
+                                    ↻ Reload
+                                </button>
+                            </div>
+
                         )
                     }
                 )
