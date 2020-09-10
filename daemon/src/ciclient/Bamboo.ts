@@ -1,10 +1,9 @@
 import {Fetch} from "./Fetch";
-import {Config} from "./Config";
 import {BuildStatus} from "bwatch-common";
 import {Decode as D, Decoder} from "tea-cup-core";
 import chalk from "chalk";
 
-export interface BambooConfig extends Config {
+export interface BambooConfig {
     readonly serverUrl: string;
     readonly plan: string;
 }

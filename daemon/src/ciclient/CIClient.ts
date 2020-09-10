@@ -3,7 +3,6 @@ import {Fetch} from "./Fetch";
 import {TravisConfig, TravisConfigDecoder, TravisFetch} from "./Travis";
 import {BambooConfig, BambooConfigDecoder, BambooFetch} from "./Bamboo";
 import {BuildStatus} from "bwatch-common";
-import {Config} from "./Config";
 import {Decoder} from "tea-cup-core";
 import {Decode as D} from "tea-cup-core/dist/Decode";
 import chalk from "chalk";
@@ -71,7 +70,7 @@ export class Build {
 
     readonly uuid: string;
     private _status: BuildStatus;
-    private _fetch?: Fetch<Config>;
+    private _fetch?: Fetch<any>;
     private _polling: boolean;
     private _pollTimeout: any;
     private _fetchCount: number;
@@ -138,7 +137,7 @@ export class Build {
         }
     }
 
-    protected doFetch(onResult: (status: BuildStatus) => void): Fetch<Config> {
+    private doFetch(onResult: (status: BuildStatus) => void): Fetch<any> {
         switch (this._config.tag) {
             case "bamboo": {
                 return new BambooFetch(this.uuid, this._config.conf, onResult);
