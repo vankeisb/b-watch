@@ -1,3 +1,5 @@
+echo "Yalla"
+
 yarn install && \
 cd common && yarn build && cd .. && \
 cd daemon && yarn build && cd .. && \
