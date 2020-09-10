@@ -73,7 +73,7 @@ const server = createServerFromArgs({
 
 switch (server.tag) {
     case "Ok": {
-        // server.value.start();
+        server.value.start();
         break;
     }
     case "Err": {

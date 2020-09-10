@@ -15,7 +15,7 @@ ReactDOM.render(
     <Program
         init={() => init(api)}
         view={view}
-        update={update}
+        update={(msg, model) => update(api, msg, model)}
         subscriptions={() => subscriptions(ws)}
         devTools={withReduxDevTools(DevTools.init<Model, Msg>(window))}
     />,

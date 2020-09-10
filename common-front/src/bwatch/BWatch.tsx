@@ -46,11 +46,13 @@ export function view(dispatch: Dispatcher<Msg>, model: Model) {
                                 <div className="alert alert-danger">
                                     <strong>Error!</strong> {err}
                                 </div>
-                                <button className="button button-primary">
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={() => dispatch({ tag: "reload" })}>
                                     ↻ Reload
                                 </button>
                             </div>
-
                         )
                     }
                 )
@@ -140,11 +142,13 @@ function notifTitle(build: BuildInfo): string {
     }
 }
 
-export function update(msg: Msg, model: Model) : [Model, Cmd<Msg>] {
+export function update(api: Api, msg: Msg, model: Model) : [Model, Cmd<Msg>] {
     // console.log("update", msg);
     switch (msg.tag) {
         case "noop":
             return noCmd(model);
+        case "reload":
+            return init(api);
         case "got-builds":
             return noCmd({
                 ...model,
