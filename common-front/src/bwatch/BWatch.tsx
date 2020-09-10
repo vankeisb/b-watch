@@ -1,7 +1,7 @@
-import {Cmd, Dispatcher, Http, just, Maybe, noCmd, nothing, Result, Sub, Task} from "react-tea-cup";
+import {Cmd, Dispatcher, just, Maybe, noCmd, nothing, Result, Sub, Task} from "react-tea-cup";
 import React from "react";
 import {Msg} from "./Msg";
-import {ListResponse, ListResponseDecoder} from "bwatch-common";
+import {Api, ListResponse} from "bwatch-common";
 import {ViewBuildInfo, ViewStatus} from "./ViewBuildInfo";
 
 export interface Model {
@@ -15,16 +15,11 @@ function gotBuilds(r: Result<string,ListResponse>): Msg {
     }
 }
 
-export function init(): [Model, Cmd<Msg>] {
+export function init(api: Api): [Model, Cmd<Msg>] {
     const model: Model = {
         builds: nothing
     };
-    const listBuilds: Task<string,ListResponse> =
-        Http.jsonBody(
-            Http.fetch('/api'),
-            ListResponseDecoder
-        ).mapError(e => e.message);
-    return [ model, Task.attempt(listBuilds, gotBuilds) ];
+    return [ model, Task.attempt(api.list(), gotBuilds) ];
 }
 
 export function view(dispatch: Dispatcher<Msg>, model: Model) {
@@ -70,3 +65,4 @@ export function update(msg: Msg, model: Model) : [Model, Cmd<Msg>] {
 export function subscriptions(): Sub<Msg> {
     return Sub.none();
 }
+
