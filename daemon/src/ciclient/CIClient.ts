@@ -1,63 +1,21 @@
 import * as uuid from "uuid";
 import {Fetch} from "./Fetch";
-import {TravisConfig, TravisConfigDecoder, TravisFetch} from "./Travis";
-import {BambooConfig, BambooConfigDecoder, BambooFetch} from "./Bamboo";
 import {BuildStatus} from "bwatch-common";
-import {Decoder} from "tea-cup-core";
-import {Decode as D} from "tea-cup-core/dist/Decode";
 import chalk from "chalk";
+import {BuildConfig, Configuration} from "./Configuration";
+import {BambooFetch} from "./Bamboo";
+import {TravisFetch} from "./Travis";
 
-
-export type BuildConfig
-    = BambooBuildConfig
-    | TravisBuildConfig
-
-export interface BambooBuildConfig {
-    tag: "bamboo"
-    conf: BambooConfig
-}
-
-export const BambooBuildConfigDecoder: Decoder<BambooBuildConfig> =
-    D.map(
-        conf => ({tag: "bamboo", conf}),
-        BambooConfigDecoder
-    );
-
-export const TravisBuildConfigDecoder: Decoder<TravisBuildConfig> =
-    D.map(
-        conf => ({tag: "travis", conf}),
-        TravisConfigDecoder
-    );
-
-
-export const BuildConfigDecoder: Decoder<BuildConfig> =
-    D.andThen(
-        tag => {
-            switch (tag) {
-                case "bamboo":
-                    return BambooBuildConfigDecoder;
-                case "travis":
-                    return TravisBuildConfigDecoder;
-                default:
-                    return D.fail("unhandled tag " + tag);
-            }
-        },
-        D.field("tag", D.str)
-    );
-
-export interface TravisBuildConfig {
-    tag: "travis"
-    conf: TravisConfig
-}
 
 export class CIClient {
 
     private readonly builds: Build[];
 
-    constructor(configs: ReadonlyArray<BuildConfig>,
-                private readonly listener: (build: Build) => void) {
-        this.builds = configs.map(c => new Build(c, listener))
-        console.log("Initialized with", chalk.green(this.builds.length) + " build configuration(s)")
+    constructor(readonly config: Configuration,
+                private readonly _listener: (build: Build) => void) {
+        this.builds = config.builds.map(c => new Build(c, config.pollingInterval, _listener))
+        console.log("Initialized with", chalk.green(this.builds.length) + " build configuration(s)");
+        console.log("Polling interval", chalk.green(config.pollingInterval), "ms");
     }
 
     list(): ReadonlyArray<Build> {
@@ -76,7 +34,8 @@ export class Build {
     private _fetchCount: number;
 
     constructor(private readonly _config: BuildConfig,
-                private readonly listener: (build: Build) => void) {
+                private readonly _pollingInterval: number,
+                private readonly _listener: (build: Build) => void) {
         this.uuid = uuid.v4();
         this._status = {tag: "none"};
         this._polling = false;
@@ -106,7 +65,7 @@ export class Build {
                 return;
             }
             this._status = status;
-            this.listener(this);
+            this._listener(this);
             delete this._fetch;
             if (this._polling) {
                 this._pollTimeout = setTimeout(() => {

@@ -2,8 +2,9 @@ import express from "express";
 import * as WebSocket from "ws";
 import * as http from 'http';
 
-import {BuildConfig, CIClient} from "./CIClient";
+import {CIClient} from "./CIClient";
 import {LocalApi, toBuildInfo} from "./LocalApi";
+import {Configuration} from "./Configuration";
 
 export class Server {
 
@@ -12,9 +13,9 @@ export class Server {
 
     constructor(
         readonly port: number,
-        readonly configs: ReadonlyArray<BuildConfig>
+        readonly config: Configuration
     ) {
-        this.ciClient = new CIClient(configs, b => {
+        this.ciClient = new CIClient(config, b => {
             // notify connected sockets
             this.sockets.forEach(ws =>
                 ws.send(
