@@ -25,7 +25,7 @@ export class Server {
         });
     }
 
-    start() {
+    start(onStarted?: () => void) {
         const app = express();
         const server = http.createServer(app);
         const wss = new WebSocket.Server({server});
@@ -70,6 +70,7 @@ export class Server {
 
         server.listen(this.port, "localhost", () => {
             console.log(`server started on http://localhost:${this.port}`)
+            onStarted?.();
         });
 
     }
