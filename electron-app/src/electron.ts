@@ -1,4 +1,6 @@
 import { app, BrowserWindow } from 'electron';
+import {loadConfigsFromFile} from "bwatch-daemon";
+import chalk from "chalk";
 
 function createWindow () {
     // Create the browser window.
@@ -15,3 +17,11 @@ function createWindow () {
 }
 
 app.on('ready', createWindow);
+
+console.log(chalk.green("Starting bwatch app"));
+
+// TODO
+//const configs = loadConfigsFromFile("../../bwatch.sample.json");
+
+//
+// const ciClient: CIClient = new CIClient()

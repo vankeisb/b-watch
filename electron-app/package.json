@@ -13,6 +13,7 @@
   "license": "MIT",
   "devDependencies": {
     "bwatch-common-front": "0.0.1",
+    "bwatch-daemon": "0.0.1",
     "electron": "^10.1.1",
     "html-webpack-plugin": "^4.4.1",
     "ts-loader": "^8.0.3",
