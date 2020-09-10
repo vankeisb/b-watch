@@ -1,8 +1,8 @@
-import {Cmd, Dispatcher, just, Maybe, nothing, Result, Sub, Task, ok, Tuple} from "react-tea-cup";
+import {Cmd, Dispatcher, just, Maybe, nothing, ok, Result, Sub, Task, Tuple} from "react-tea-cup";
 import React from "react";
 import {gotBuilds, gotWsMessage, Msg} from "./Msg";
 import {Api, BuildInfo, BuildInfoDecoder, ListResponse} from "bwatch-common";
-import {ViewBuildInfo, ViewStatus} from "./ViewBuildInfo";
+import {ViewBuildInfo} from "./ViewBuildInfo";
 
 export interface Model {
     readonly listResponse: Maybe<Result<string,ListResponse>>;
@@ -67,10 +67,14 @@ function updateBuild(model: Model, build: BuildInfo): [Model, Cmd<Msg>] {
                     const { builds } = listResp;
                     const index = builds.findIndex(b => b.uuid === build.uuid);
                     let newBuilds = [...builds];
+                    let needsNotif;
                     if (index === -1) {
+                        needsNotif = true;
                         newBuilds = builds.concat([build]);
                     }  else {
+                        const prevBuild = builds[index];
                         newBuilds[index] = build;
+                        needsNotif = prevBuild.status.tag !== "none" && prevBuild.status.tag !== build.status.tag;
                     }
                     const newResp: ListResponse = {
                         ...listResp,
@@ -80,9 +84,22 @@ function updateBuild(model: Model, build: BuildInfo): [Model, Cmd<Msg>] {
                         ...model,
                         listResponse: just(ok(newResp))
                     };
-                    return Tuple.t2n(newModel, Cmd.none<Msg>())
+
+                    const notifCmd: Cmd<Msg> = needsNotif
+                        ? (
+                            Task.perform(
+                                notification(notifTitle(build), {
+                                    body: notifBody(build)
+                                }),
+                                () => ({tag: "noop"})
+                            )
+                        )
+                        : Cmd.none();
+
+                    return Tuple.t2n(newModel, notifCmd)
                 },
                 err => {
+                    // TODO recreate the list with only one build ?
                     console.warn("trying to update build whereas we have an error", err);
                     return noCmd(model);
                 }
@@ -91,9 +108,36 @@ function updateBuild(model: Model, build: BuildInfo): [Model, Cmd<Msg>] {
         .withDefaultSupply(() => noCmd(model));
 }
 
+function notifBody(build: BuildInfo): string {
+    switch (build.status.tag) {
+        case "error":
+            return "⚠ Error !";
+        case "green":
+            return "✓ passed";
+        case "red":
+            return "✖ failed";
+        case "none":
+            return "loading";
+    }
+}
+
+function notifTitle(build: BuildInfo): string {
+    const { info } = build;
+    switch (info.tag) {
+        case "bamboo": {
+            return info.plan;
+        }
+        case "travis": {
+            return info.repository + "/" + info.branch;
+        }
+    }
+}
+
 export function update(msg: Msg, model: Model) : [Model, Cmd<Msg>] {
     // console.log("update", msg);
     switch (msg.tag) {
+        case "noop":
+            return noCmd(model);
         case "got-builds":
             return noCmd({
                 ...model,
@@ -105,7 +149,6 @@ export function update(msg: Msg, model: Model) : [Model, Cmd<Msg>] {
                 typeof data === "string"
                     ? BuildInfoDecoder.decodeString(data)
                     : BuildInfoDecoder.decodeValue(data)
-            console.log("decoded", decoded)
             switch (decoded.tag) {
                 case "Ok": {
                     return updateBuild(model, decoded.value);
@@ -152,5 +195,24 @@ class WebSocketSub<M> extends Sub<M> {
     protected onRelease() {
         super.onRelease();
         this.ws.removeEventListener("message", this.listener);
+    }
+}
+
+// notifications helper
+
+function notification(title: string, options: NotificationOptions): Task<never, Notification> {
+    return new NotifTask(title, options);
+}
+
+class NotifTask extends Task<never, Notification> {
+
+    constructor(private readonly title: string,
+                private readonly options: NotificationOptions) {
+        super();
+    }
+
+    execute(callback: (r: Result<never, Notification>) => void): void {
+        const n = new Notification(this.title, this.options);
+        callback(ok(n));
     }
 }

@@ -3,7 +3,8 @@ import {ListResponse} from "bwatch-common";
 
 export type Msg
     = { tag: "got-builds"; r: Result<string, ListResponse> }
-    | { tag: "got-ws-message"; data: any };
+    | { tag: "got-ws-message"; data: any }
+    | { tag: "noop" };
 
 
 export function gotBuilds(r: Result<string,ListResponse>): Msg {

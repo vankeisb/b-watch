@@ -44,8 +44,7 @@ export const BuildConfigDecoder: Decoder<BuildConfig> =
     );
 
 
-const defaultPollingInterval = 5 * 1000;
-
+export const defaultPollingInterval = 5 * 1000;
 
 export const ConfigurationDecoder: Decoder<Configuration> =
     D.map2(
@@ -56,8 +55,8 @@ export const ConfigurationDecoder: Decoder<Configuration> =
         D.field("builds", D.array(BuildConfigDecoder)),
         D.oneOf([
             D.field("pollingInterval", D.num),
-            D.succeed(defaultPollingInterval)
-        ])
+            D.succeed(undefined)
+        ]),
     );
 
 export interface TravisBuildConfig {
@@ -67,7 +66,7 @@ export interface TravisBuildConfig {
 
 export interface Configuration {
     readonly builds: ReadonlyArray<BuildConfig>;
-    readonly pollingInterval: number;
+    readonly pollingInterval?: number;
 }
 
 // @ts-ignore

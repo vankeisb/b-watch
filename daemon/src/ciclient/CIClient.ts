@@ -2,7 +2,7 @@ import * as uuid from "uuid";
 import {Fetch} from "./Fetch";
 import {BuildStatus} from "bwatch-common";
 import chalk from "chalk";
-import {BuildConfig, Configuration} from "./Configuration";
+import {BuildConfig, Configuration, defaultPollingInterval} from "./Configuration";
 import {BambooFetch} from "./Bamboo";
 import {TravisFetch} from "./Travis";
 
@@ -13,7 +13,8 @@ export class CIClient {
 
     constructor(readonly config: Configuration,
                 private readonly _listener: (build: Build) => void) {
-        this.builds = config.builds.map(c => new Build(c, config.pollingInterval, _listener))
+        const pollingInterval = config.pollingInterval || defaultPollingInterval;
+        this.builds = config.builds.map(c => new Build(c, pollingInterval, _listener))
         console.log("Initialized with", chalk.green(this.builds.length) + " build configuration(s)");
         console.log("Polling interval", chalk.green(config.pollingInterval), "ms");
     }
