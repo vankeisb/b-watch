@@ -30,7 +30,7 @@ const flags: Flags = {
 connectToWs(flags);
 
 ipcRenderer.on("server-ready", () => {
-    console.log("got server-ready event, reconnecting ws");
+    console.log("got server-ready");
     connectToWs(flags);
 });
 

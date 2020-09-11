@@ -9,6 +9,8 @@ const mf = {
     version: "0.0.1",
 };
 
+const args = parseArgs(mf);
+
 ipcMain.on("open-build", (event, args) => {
     const url = args[0];
     shell.openExternal(url);
@@ -21,22 +23,6 @@ function createWindow() {
     }
     const iconName = icons[process.platform] || 'iconTemplate.png'
     const icon = path.join('assets', 'tray-icon', iconName)
-
-    const server = createServerFromArgs(parseArgs(mf));
-    switch (server.tag) {
-        case "Ok": {
-            server.value.start(() => {
-                console.log("server started, notifying app");
-                win.webContents.send("server-ready", "ready");
-            });
-            break;
-        }
-        case "Err": {
-            console.log(chalk.red(server.err));
-            app.exit(1);
-            break;
-        }
-    }
 
     // Create the browser window.
     const win = new BrowserWindow({
@@ -92,8 +78,31 @@ function createWindow() {
     tray.setToolTip('build-watcher')
     tray.setContextMenu(contextMenu)
 
+    ipcMain.once("app-ready", () => {
+
+        console.log("app ready, starting server");
+        const server = createServerFromArgs(args);
+        switch (server.tag) {
+            case "Ok": {
+                server.value.start(() => {
+                    console.log("server started, notifying app");
+                    win.webContents.send("server-ready", args);
+                });
+                break;
+            }
+            case "Err": {
+                console.log(chalk.red(server.err));
+                app.exit(1);
+                break;
+            }
+        }
+    });
+
 }
 
 app.on('ready', createWindow);
+
+
+
 
 

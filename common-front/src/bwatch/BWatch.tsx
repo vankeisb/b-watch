@@ -10,7 +10,7 @@ if (Notification.permission !== "granted")
 let ws: WebSocket | undefined;
 
 export function connectToWs(flags: Flags) {
-    console.log("connecting to ws");
+    console.log("connecting to ws", flags.daemonPort);
     ws = new WebSocket("ws://localhost:" + flags.daemonPort);
 }
 
@@ -31,7 +31,21 @@ export function init(flags: Flags, api: Api): [Model, Cmd<Msg>] {
     const model: Model = {
         listResponse: nothing
     };
-    return listBuilds(api, model);
+    switch (flags.tag) {
+        case "browser": {
+            return listBuilds(api, model);
+        }
+        case "electron": {
+            console.log("app ready");
+            const notifyAppReady = Task.fromLambda(() => {
+                flags.ipc.send("app-ready", true);
+            })
+            return Tuple.t2n(
+                model,
+                Task.attempt(notifyAppReady, () => ({tag: "noop"}))
+            )
+        }
+    }
 }
 
 function viewPage(content: React.ReactNode) {
@@ -298,7 +312,6 @@ class WebSocketSub<M> extends Sub<M> {
     }
 
     private readonly listener = (ev: MessageEvent) => {
-        console.log("ws event");
         this.dispatch(this.toMsg(ev.data));
     }
 
@@ -360,7 +373,9 @@ class IpcSub<M> extends Sub<M> {
             const l = (args: any[]) => {
                 ipcSubs
                     .filter(s => s.channel === this.channel)
-                    .forEach(s => s.onIpcMessage(args));
+                    .forEach(s => {
+                        s.onIpcMessage(args)
+                    });
             }
             ipcListeners[this.channel] = l;
             this.ipc.on(this.channel, l);
