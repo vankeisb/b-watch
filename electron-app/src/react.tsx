@@ -2,47 +2,52 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {Api} from "bwatch-common";
 import {RemoteApi} from "bwatch-common";
-import {DevTools, Program, withReduxDevTools} from "react-tea-cup";
+import {DevTools, Program, withReduxDevTools, Decode as D} from "react-tea-cup";
 import {Flags, init, Model, Msg, subscriptions, update, view} from "bwatch-common-front";
 import * as electron from "electron";
 
 import "bwatch-common-front/bwatch.css";
-import {connectToWs} from "bwatch-common-front/dist/bwatch/BWatch";
+import {Args} from "bwatch-daemon";
 
 const ipcRenderer = electron.ipcRenderer;
 
-const flags: Flags = {
-    tag: "electron",
-    ipc: {
-        send(channel: string, ...args: any[]): void {
-            ipcRenderer.send(channel, args);
+ipcRenderer.on("get-args", (ev, args) => {
+    console.log("get-args", args);
+    const a: Args = args as Args;
+    const flags: Flags = {
+        tag: "electron",
+        ipc: {
+            send(channel: string, ...args: any[]): void {
+                ipcRenderer.send(channel, args);
+            },
+            on(channel: string, f:(...args: any[]) => void): void {
+                ipcRenderer.on(channel, (event, arg) => {
+                    console.log("ipcRenderer.on", channel, arg);
+                    f(arg);
+                });
+            }
         },
-        on(channel: string, f:(...args: any[]) => void): void {
-            ipcRenderer.on(channel, (event, args) => {
-                console.log("ipcRenderer.on", channel, args);
-                f(args);
-            });
-        }
-    },
-    daemonPort: 4000
-};
+        daemonPort: a.port
+    };
 
-connectToWs(flags);
+    ReactDOM.render(
+        <Program
+            init={() => init(flags)}
+            view={(dispatch, model) => view(flags, dispatch, model)}
+            update={(msg, model) => update(flags, msg, model)}
+            subscriptions={() => subscriptions(flags)}
+            devTools={withReduxDevTools(DevTools.init<Model, Msg>(window))}
+        />,
+        document.getElementById('root')
+    );
+})
 
-ipcRenderer.on("server-ready", () => {
-    console.log("got server-ready");
-    connectToWs(flags);
-});
+// tell renderer that we're ready
+ipcRenderer.send("renderer-ready", true);
 
-const api: Api = new RemoteApi("http://localhost:4000/api");
+// const args: Args = parseArgs({
+//     name: "bwatch",
+//     description: "bwatch desktop app",
+//     version: "0.0.1",
+// });
 
-ReactDOM.render(
-    <Program
-        init={() => init(flags, api)}
-        view={(dispatch, model) => view(flags, dispatch, model)}
-        update={(msg, model) => update(flags, api, msg, model)}
-        subscriptions={() => subscriptions(flags)}
-        devTools={withReduxDevTools(DevTools.init<Model, Msg>(window))}
-    />,
-    document.getElementById('root')
-);

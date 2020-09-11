@@ -3,13 +3,11 @@ import {createServerFromArgs, parseArgs} from "bwatch-daemon";
 import chalk from "chalk";
 import * as path from "path";
 
-const mf = {
+const args = parseArgs({
     name: "bwatch",
     description: "bwatch desktop app",
     version: "0.0.1",
-};
-
-const args = parseArgs(mf);
+});
 
 ipcMain.on("open-build", (event, args) => {
     const url = args[0];
@@ -33,6 +31,30 @@ function createWindow() {
         },
         title: "bwatch",
         icon,
+    });
+
+    ipcMain.once("app-ready", () => {
+
+        console.log("app ready, starting server");
+        const server = createServerFromArgs(args);
+        switch (server.tag) {
+            case "Ok": {
+                server.value.start(() => {
+                    console.log("server started, notifying app");
+                    win.webContents.send("server-ready", true);
+                });
+                break;
+            }
+            case "Err": {
+                console.log(chalk.red(server.err));
+                app.exit(1);
+                break;
+            }
+        }
+    });
+
+    ipcMain.on("renderer-ready", () => {
+        win.webContents.send("get-args", args);
     });
 
     const dev = process.env.BW_ENV === "dev";
@@ -77,26 +99,6 @@ function createWindow() {
     )
     tray.setToolTip('build-watcher')
     tray.setContextMenu(contextMenu)
-
-    ipcMain.once("app-ready", () => {
-
-        console.log("app ready, starting server");
-        const server = createServerFromArgs(args);
-        switch (server.tag) {
-            case "Ok": {
-                server.value.start(() => {
-                    console.log("server started, notifying app");
-                    win.webContents.send("server-ready", args);
-                });
-                break;
-            }
-            case "Err": {
-                console.log(chalk.red(server.err));
-                app.exit(1);
-                break;
-            }
-        }
-    });
 
 }
 

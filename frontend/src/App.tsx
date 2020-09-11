@@ -6,8 +6,6 @@ import {Api} from "bwatch-common";
 import {RemoteApi} from "bwatch-common";
 import {connectToWs} from "bwatch-common-front/dist/bwatch/BWatch";
 
-const api: Api = new RemoteApi("/api");
-
 const flags: Flags = {
   tag: "browser",
   daemonPort: 4000
@@ -18,9 +16,9 @@ connectToWs(flags);
 export const App = () => {
   return (
     <Program
-      init={() => init(flags, api)}
+      init={() => init(flags)}
       view={(dispatch, model) => view(flags, dispatch, model)}
-      update={(msg, model) => update(flags, api, msg, model)}
+      update={(msg, model) => update(flags, msg, model)}
       subscriptions={() => subscriptions(flags)}
       devTools={withReduxDevTools(DevTools.init<Model, Msg>(window))}
     />

@@ -1,8 +1,9 @@
 import {Cmd, Dispatcher, just, Maybe, nothing, ok, Result, Sub, Task, Tuple} from "react-tea-cup";
 import React from "react";
 import {gotBuilds, gotWsMessage, Msg} from "./Msg";
-import {Api, BuildInfo, BuildInfoDecoder, ListResponse} from "bwatch-common";
+import {Api, BuildInfo, BuildInfoDecoder, ListResponse, RemoteApi} from "bwatch-common";
 import {ViewBuildInfo} from "./ViewBuildInfo";
+import {Args} from "bwatch-daemon";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -16,7 +17,7 @@ export function connectToWs(flags: Flags) {
 
 export interface Ipc {
     send(channel: string, ...args: any[]): void;
-    on(channel: string, f:(...args: any[]) => void): void;
+    on(channel: string, f:(args: any[]) => void): void;
 }
 
 export type Flags
@@ -27,13 +28,17 @@ export interface Model {
     readonly listResponse: Maybe<Result<string,ListResponse>>;
 }
 
-export function init(flags: Flags, api: Api): [Model, Cmd<Msg>] {
+export function remoteApi(flags: Flags): RemoteApi {
+    return new RemoteApi(`http://localhost:${flags.daemonPort}/api`);
+}
+
+export function init(flags: Flags): [Model, Cmd<Msg>] {
     const model: Model = {
         listResponse: nothing
     };
     switch (flags.tag) {
         case "browser": {
-            return listBuilds(api, model);
+            return listBuilds(remoteApi(flags), model);
         }
         case "electron": {
             console.log("app ready");
@@ -199,13 +204,13 @@ function listBuilds(api: Api, model: Model): [Model, Cmd<Msg>] {
     return [{...model, listResponse: nothing }, Task.attempt(api.list(), gotBuilds)];
 }
 
-export function update(flags: Flags, api: Api, msg: Msg, model: Model) : [Model, Cmd<Msg>] {
+export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>] {
     // console.log("update", msg);
     switch (msg.tag) {
         case "noop":
             return noCmd(model);
         case "reload":
-            return listBuilds(api, model);
+            return listBuilds(remoteApi(flags), model);
         case "got-builds":
             return noCmd({
                 ...model,
@@ -251,7 +256,7 @@ export function update(flags: Flags, api: Api, msg: Msg, model: Model) : [Model,
                 () => ({tag: "noop"})
             );
 
-            return Tuple.fromNative(listBuilds(api, model))
+            return Tuple.fromNative(listBuilds(remoteApi(flags), model))
                 .mapSecond(c => Cmd.batch([connectCmd, c]))
                 .toNative()
         }
@@ -278,9 +283,12 @@ function openBuild(flags: Flags, url: string): Cmd<Msg> {
 export function subscriptions(flags: Flags): Sub<Msg> {
     let ipc: Sub<Msg> = Sub.none();
     if (flags.tag === "electron") {
-        ipc = ipcSub<Msg>(flags.ipc, "server-ready", () => ({
-            tag: "server-ready"
-        }));
+        ipc = ipcSub<Msg>(flags.ipc, "server-ready", msgArgs => {
+            return {
+                tag: "server-ready",
+                args: msgArgs
+            }
+        });
     }
     let wsSub: Sub<Msg> = Sub.none();
     if (ws) {
@@ -352,7 +360,7 @@ type IpcListener = (args: any[]) => void;
 let ipcListeners: { [id: string]: IpcListener } = {};
 let ipcSubs: IpcSub<any>[] = [];
 
-function ipcSub<M>(ipc: Ipc, channel: string, toMsg: (args: any[]) => M): Sub<M> {
+function ipcSub<M>(ipc: Ipc, channel: string, toMsg: (args: any) => M): Sub<M> {
     return new IpcSub(ipc, channel, toMsg);
 }
 
@@ -361,7 +369,7 @@ class IpcSub<M> extends Sub<M> {
     constructor(
         readonly ipc: Ipc,
         readonly channel: string,
-        private readonly toMsg: (args: any[]) => M
+        private readonly toMsg: (args: any) => M
     ) {
         super();
     }
