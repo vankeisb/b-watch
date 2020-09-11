@@ -54,7 +54,7 @@ function getBuildStatus(uuid: string, accessToken: string, config: TravisConfig)
                 let buildId = last_build.id;
                 let url = config.serverUrl + "/" + config.repository + "/builds/" + buildId;
                 if (state === "started") {
-                    state = state.previous_state;
+                    state = last_build.previous_state;
                 }
                 if (state === "passed") {
                     return green(url);

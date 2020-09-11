@@ -7,11 +7,18 @@ import {Flags, init, Model, Msg, subscriptions, update, view} from "bwatch-commo
 import * as electron from "electron";
 
 import "bwatch-common-front/bwatch.css";
+import {connectToWs} from "bwatch-common-front/dist/bwatch/BWatch";
 
 const ipcRenderer = electron.ipcRenderer;
 
+connectToWs();
+
+ipcRenderer.on("server-ready", () => {
+    console.log("got server-ready event, reconnecting ws");
+    connectToWs();
+});
+
 const api: Api = new RemoteApi("http://localhost:4000/api");
-const ws: WebSocket = new WebSocket("ws://localhost:4000");
 
 const flags: Flags = {
     tag: "electron",
@@ -21,6 +28,7 @@ const flags: Flags = {
         },
         on(channel: string, f:(...args: any[]) => void): void {
             ipcRenderer.on(channel, (event, args) => {
+                console.log("ipcRenderer.on", channel, args);
                 f(args);
             });
         }
@@ -32,7 +40,7 @@ ReactDOM.render(
         init={() => init(flags, api)}
         view={(dispatch, model) => view(flags, dispatch, model)}
         update={(msg, model) => update(flags, api, msg, model)}
-        subscriptions={() => subscriptions(flags, ws)}
+        subscriptions={() => subscriptions(flags)}
         devTools={withReduxDevTools(DevTools.init<Model, Msg>(window))}
     />,
     document.getElementById('root')

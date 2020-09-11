@@ -7,6 +7,13 @@ import {ViewBuildInfo} from "./ViewBuildInfo";
 if (Notification.permission !== "granted")
     Notification.requestPermission();
 
+let ws: WebSocket | undefined;
+
+export function connectToWs() {
+    console.log("connecting to ws");
+    ws = new WebSocket("ws://localhost:4000");
+}
+
 export interface Ipc {
     send(channel: string, ...args: any[]): void;
     on(channel: string, f:(...args: any[]) => void): void;
@@ -221,6 +228,19 @@ export function update(flags: Flags, api: Api, msg: Msg, model: Model) : [Model,
             }
             break;
         }
+        case "server-ready": {
+            const connectCmd: Cmd<Msg> = Task.attempt(
+                Task.fromLambda(() => {
+                    connectToWs();
+                    return true;
+                }),
+                () => ({tag: "noop"})
+            );
+
+            return Tuple.fromNative(listBuilds(api, model))
+                .mapSecond(c => Cmd.batch([connectCmd, c]))
+                .toNative()
+        }
     }
 }
 
@@ -241,8 +261,18 @@ function openBuild(flags: Flags, url: string): Cmd<Msg> {
     }
 }
 
-export function subscriptions(flags: Flags, ws: WebSocket): Sub<Msg> {
-    return onWebSocketMessage(ws, gotWsMessage);
+export function subscriptions(flags: Flags): Sub<Msg> {
+    let ipc: Sub<Msg> = Sub.none();
+    if (flags.tag === "electron") {
+        ipc = ipcSub<Msg>(flags.ipc, "server-ready", () => ({
+            tag: "server-ready"
+        }));
+    }
+    let wsSub: Sub<Msg> = Sub.none();
+    if (ws) {
+        wsSub = onWebSocketMessage(ws, gotWsMessage);
+    }
+    return Sub.batch([wsSub, ipc]);
 }
 
 // WS helper

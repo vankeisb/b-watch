@@ -75,10 +75,12 @@ function createWindow() {
 
     switch (server.tag) {
         case "Ok": {
-            // TODO better handle react app load !
-            setTimeout(() => {
-                server.value.start();
-            }, 1000);
+            server.value.start(() => {
+                setTimeout(() => {
+                    console.log("server started, notifying app");
+                    win.webContents.send("server-ready", "ready");
+                }, 5000)
+            });
             break;
         }
         case "Err": {
