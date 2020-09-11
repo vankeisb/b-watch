@@ -39,3 +39,9 @@ Start the desktop app :
     yarn start
     
 > desktop app starts the daemon : careful if you already have the daemon running
+
+# Build executable
+
+    cd electron-app
+    yarn compile # if not compiled already
+    yarn dist
