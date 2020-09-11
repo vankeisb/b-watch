@@ -9,9 +9,9 @@ if (Notification.permission !== "granted")
 
 let ws: WebSocket | undefined;
 
-export function connectToWs() {
+export function connectToWs(flags: Flags) {
     console.log("connecting to ws");
-    ws = new WebSocket("ws://localhost:4000");
+    ws = new WebSocket("ws://localhost:" + flags.daemonPort);
 }
 
 export interface Ipc {
@@ -20,8 +20,8 @@ export interface Ipc {
 }
 
 export type Flags
-    = { tag: "browser" }
-    | { tag: "electron", ipc: Ipc };
+    = { tag: "browser", daemonPort: number }
+    | { tag: "electron", daemonPort: number, ipc: Ipc };
 
 export interface Model {
     readonly listResponse: Maybe<Result<string,ListResponse>>;
@@ -231,7 +231,7 @@ export function update(flags: Flags, api: Api, msg: Msg, model: Model) : [Model,
         case "server-ready": {
             const connectCmd: Cmd<Msg> = Task.attempt(
                 Task.fromLambda(() => {
-                    connectToWs();
+                    connectToWs(flags);
                     return true;
                 }),
                 () => ({tag: "noop"})

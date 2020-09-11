@@ -11,15 +11,6 @@ import {connectToWs} from "bwatch-common-front/dist/bwatch/BWatch";
 
 const ipcRenderer = electron.ipcRenderer;
 
-connectToWs();
-
-ipcRenderer.on("server-ready", () => {
-    console.log("got server-ready event, reconnecting ws");
-    connectToWs();
-});
-
-const api: Api = new RemoteApi("http://localhost:4000/api");
-
 const flags: Flags = {
     tag: "electron",
     ipc: {
@@ -32,8 +23,18 @@ const flags: Flags = {
                 f(args);
             });
         }
-    }
+    },
+    daemonPort: 4000
 };
+
+connectToWs(flags);
+
+ipcRenderer.on("server-ready", () => {
+    console.log("got server-ready event, reconnecting ws");
+    connectToWs(flags);
+});
+
+const api: Api = new RemoteApi("http://localhost:4000/api");
 
 ReactDOM.render(
     <Program

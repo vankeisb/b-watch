@@ -9,10 +9,11 @@ import {connectToWs} from "bwatch-common-front/dist/bwatch/BWatch";
 const api: Api = new RemoteApi("/api");
 
 const flags: Flags = {
-  tag: "browser"
+  tag: "browser",
+  daemonPort: 4000
 };
 
-connectToWs();
+connectToWs(flags);
 
 export const App = () => {
   return (
