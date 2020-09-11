@@ -28,6 +28,16 @@
       "serverUrl": "https://travis-ci.org",
       "repository": "vankeisb/react-tea-cup",
       "branch": "develop"
+    },{
+      "tag": "travis",
+      "serverUrl": "https://travis-ci.org",
+      "repository": "vankeisb/b-watch",
+      "branch": "develop"
+    },{
+      "tag": "travis",
+      "serverUrl": "https://travis-ci.org",
+      "repository": "vankeisb/b-watch",
+      "branch": "feature/test-notif"
     }
   ]
 }
