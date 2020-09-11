@@ -20,7 +20,7 @@ Project uses yarn workspaces. A convenience script can be used to build everythi
 
     ./build.sh
 
-> following instructions will use the `bwatch.sample.jcon` file, so you'll need to set `GITHUB_TOKEN` to a valid github token. You can use another file with the `--builds` option.
+> following instructions will use the `bwatch.sample.jcon` file, so you'll need to set `TRAVIS_TOKEN` to a valid github token. You can use another file with the `--builds` option.
 
            
 Start the daemon :
@@ -36,6 +36,12 @@ Start the webapp :
 Start the desktop app :
     
     cd electron-app
-    yarn start
+    yarn start -b ../bwatch.sample.json    
     
 > desktop app starts the daemon : careful if you already have the daemon running
+
+# Build executable
+
+    cd electron-app
+    yarn compile # if not compiled already
+    yarn dist

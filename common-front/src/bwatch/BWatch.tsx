@@ -344,7 +344,6 @@ class NotifTask extends Task<never, Notification> {
     }
 
     execute(callback: (r: Result<never, Notification>) => void): void {
-        debugger;
         const n = new Notification(this.title, this.options);
         n.onclick = e => {
             this.onClick(e)

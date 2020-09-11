@@ -10,19 +10,34 @@
       "serverUrl": "https://travis.ibm.com",
       "repository": "VANKEISB/diesel2",
       "branch": "develop",
-      "githubToken": "${process.env.GITHUB_TOKEN}"
+      "githubToken": "${process.env.TRAVIS_TOKEN}"
     },{
       "tag": "travis",
       "serverUrl": "https://travis.ibm.com",
       "repository": "VANKEISB/diesel2",
       "branch": "feature/json-providers",
-      "githubToken": "${process.env.GITHUB_TOKEN}"
+      "githubToken": "${process.env.TRAVIS_TOKEN}"
     },{
       "tag": "travis",
       "serverUrl": "https://travis.ibm.com",
       "repository": "dba/intellirule",
       "branch": "develop",
-      "githubToken": "${process.env.GITHUB_TOKEN}"
+      "githubToken": "${process.env.TRAVIS_TOKEN}"
+    },{
+      "tag": "travis",
+      "serverUrl": "https://travis-ci.org",
+      "repository": "vankeisb/react-tea-cup",
+      "branch": "develop"
+    },{
+      "tag": "travis",
+      "serverUrl": "https://travis-ci.org",
+      "repository": "vankeisb/b-watch",
+      "branch": "develop"
+    },{
+      "tag": "travis",
+      "serverUrl": "https://travis-ci.org",
+      "repository": "vankeisb/b-watch",
+      "branch": "master"
     }
   ]
 }

@@ -1,9 +1,7 @@
 import React from 'react';
 import './App.css';
 import {DevTools, Program, withReduxDevTools} from "react-tea-cup";
-import {Model, init, view, update, subscriptions, Msg, Flags } from "bwatch-common-front";
-import {Api} from "bwatch-common";
-import {RemoteApi} from "bwatch-common";
+import {Flags, init, Model, Msg, subscriptions, update, view} from "bwatch-common-front";
 import {connectToWs} from "bwatch-common-front/dist/bwatch/BWatch";
 
 const flags: Flags = {
