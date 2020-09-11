@@ -23,6 +23,11 @@
       "repository": "dba/intellirule",
       "branch": "develop",
       "githubToken": "${process.env.GITHUB_TOKEN}"
+    },{
+      "tag": "travis",
+      "serverUrl": "https://travis-ci.org",
+      "repository": "vankeisb/react-tea-cup",
+      "branch": "develop"
     }
   ]
 }
