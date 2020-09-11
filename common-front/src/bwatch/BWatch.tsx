@@ -78,7 +78,7 @@ function noCmd(model: Model): [Model,Cmd<Msg>] {
 }
 
 
-function updateBuild(model: Model, build: BuildInfo): [Model, Cmd<Msg>] {
+function updateBuild(flags: Flags, model: Model, build: BuildInfo): [Model, Cmd<Msg>] {
     return model.listResponse
         .map(r =>
             r.match(
@@ -104,16 +104,23 @@ function updateBuild(model: Model, build: BuildInfo): [Model, Cmd<Msg>] {
                         listResponse: just(ok(newResp))
                     };
 
-                    const notifCmd: Cmd<Msg> = needsNotif
-                        ? (
-                            Task.perform(
-                                notification(notifTitle(build), {
-                                    body: notifBody(build)
-                                }),
-                                () => ({tag: "noop"})
-                            )
-                        )
-                        : Cmd.none();
+                    let notifCmd: Cmd<Msg> = Cmd.none();
+
+                    let url = "";
+                    if (build.status.tag === "green" || build.status.tag === "red") {
+                        url = build.status.url;
+                    }
+
+                    if (needsNotif && flags.tag === "electron") {
+                        notifCmd = Task.perform(
+                            notification(notifTitle(build), {
+                                body: notifBody(build),
+                            }, () => {
+                                flags.ipcSend("open-build", [url]);
+                            }),
+                            () => ({tag: "noop"})
+                        );
+                    }
 
                     return Tuple.t2n(newModel, notifCmd)
                 },
@@ -169,14 +176,8 @@ export function update(flags: Flags, api: Api, msg: Msg, model: Model) : [Model,
                 case "electron": {
                     return Tuple.t2n(
                         model,
-                        Task.attempt(
-                            Task.fromLambda(() => {
-                                flags.ipcSend("open-build", [msg.url]);
-                                return true;
-                            }),
-                            () => ({tag: "noop"})
-                        )
-                    )
+                        openBuild(flags, msg.url)
+                    );
                 }
                 case "browser": {
                     return noCmd(model);
@@ -192,13 +193,30 @@ export function update(flags: Flags, api: Api, msg: Msg, model: Model) : [Model,
                     : BuildInfoDecoder.decodeValue(data)
             switch (decoded.tag) {
                 case "Ok": {
-                    return updateBuild(model, decoded.value);
+                    return updateBuild(flags, model, decoded.value);
                 }
                 case "Err": {
                     console.error("unable to decode message data", decoded.err);
                     return noCmd(model);
                 }
             }
+        }
+    }
+}
+
+function openBuild(flags: Flags, url: string): Cmd<Msg> {
+    switch (flags.tag) {
+        case "electron": {
+            return Task.attempt(
+                Task.fromLambda(() => {
+                    flags.ipcSend("open-build", [url]);
+                    return true;
+                }),
+                () => ({tag: "noop"})
+            )
+        }
+        case "browser": {
+            return Cmd.none();
         }
     }
 }
@@ -241,19 +259,23 @@ class WebSocketSub<M> extends Sub<M> {
 
 // notifications helper
 
-function notification(title: string, options: NotificationOptions): Task<never, Notification> {
-    return new NotifTask(title, options);
+function notification(title: string, options: NotificationOptions, onClick: () => void): Task<never, Notification> {
+    return new NotifTask(title, options, onClick);
 }
 
 class NotifTask extends Task<never, Notification> {
 
     constructor(private readonly title: string,
-                private readonly options: NotificationOptions) {
+                private readonly options: NotificationOptions,
+                private readonly onClick: () => void) {
         super();
     }
 
     execute(callback: (r: Result<never, Notification>) => void): void {
         const n = new Notification(this.title, this.options);
+        n.onclick = () => {
+            this.onClick()
+        };
         callback(ok(n));
     }
 }
