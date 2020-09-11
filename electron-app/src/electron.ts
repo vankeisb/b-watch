@@ -30,7 +30,7 @@ function createWindow() {
     const dev = process.env.BW_ENV === "dev";
 
     win.removeMenu();
-    // win.webContents.openDevTools();
+    win.webContents.openDevTools();
 
     // and load the index.html of the app.
     // TODO file not at the same location when app is packaged
@@ -67,24 +67,29 @@ function createWindow() {
     )
     tray.setToolTip('build-watcher')
     tray.setContextMenu(contextMenu)
+
+    const server = createServerFromArgs({
+        port: 4000,
+        buildsPath: "../bwatch.sample.json"
+    });
+
+    switch (server.tag) {
+        case "Ok": {
+            // TODO better handle react app load !
+            setTimeout(() => {
+                server.value.start();
+            }, 1000);
+            break;
+        }
+        case "Err": {
+            console.log(chalk.red(server.err));
+            app.exit(1);
+            break;
+        }
+    }
+
 }
 
 app.on('ready', createWindow);
 
-const server = createServerFromArgs({
-    port: 4000,
-    buildsPath: "../bwatch.sample.json"
-});
-
-switch (server.tag) {
-    case "Ok": {
-        server.value.start();
-        break;
-    }
-    case "Err": {
-        console.log(chalk.red(server.err));
-        app.exit(1);
-        break;
-    }
-}
 

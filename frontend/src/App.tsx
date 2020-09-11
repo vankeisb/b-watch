@@ -15,10 +15,10 @@ const flags: Flags = {
 export const App = () => {
   return (
     <Program
-      init={() => init(api)}
+      init={() => init(flags, api)}
       view={(dispatch, model) => view(flags, dispatch, model)}
       update={(msg, model) => update(flags, api, msg, model)}
-      subscriptions={() => subscriptions(ws)}
+      subscriptions={() => subscriptions(flags, ws)}
       devTools={withReduxDevTools(DevTools.init<Model, Msg>(window))}
     />
   );
