@@ -1,7 +1,12 @@
-import {app, BrowserWindow, Menu, Tray} from 'electron';
+import {app, BrowserWindow, Menu, Tray, ipcMain, shell} from 'electron';
 import {createServerFromArgs} from "bwatch-daemon";
 import chalk from "chalk";
 import * as path from "path";
+
+ipcMain.on("open-build", (event, args) => {
+    const url = args[0];
+    shell.openExternal(url);
+});
 
 function createWindow() {
     const icons = {

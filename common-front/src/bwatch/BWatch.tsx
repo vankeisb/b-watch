@@ -4,6 +4,12 @@ import {gotBuilds, gotWsMessage, Msg} from "./Msg";
 import {Api, BuildInfo, BuildInfoDecoder, ListResponse} from "bwatch-common";
 import {ViewBuildInfo} from "./ViewBuildInfo";
 
+export type IpcSend = (channel: string, args: any[]) => void;
+
+export type Flags
+    = { tag: "browser" }
+    | { tag: "electron", ipcSend: IpcSend };
+
 export interface Model {
     readonly listResponse: Maybe<Result<string,ListResponse>>;
 }
@@ -27,7 +33,7 @@ function viewPage(content: React.ReactNode) {
     )
 }
 
-export function view(dispatch: Dispatcher<Msg>, model: Model) {
+export function view(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
 
     return viewPage(
         model.listResponse
@@ -36,7 +42,11 @@ export function view(dispatch: Dispatcher<Msg>, model: Model) {
                     listResponse => (
                         <div className="builds">
                             {listResponse.builds.map(build => (
-                                <ViewBuildInfo key={build.uuid} dispatch={dispatch} buildInfo={build}/>
+                                <ViewBuildInfo
+                                    key={build.uuid}
+                                    dispatch={dispatch}
+                                    buildInfo={build}
+                                    flags={flags}/>
                             ))}
                         </div>
                     ),
@@ -142,7 +152,7 @@ function notifTitle(build: BuildInfo): string {
     }
 }
 
-export function update(api: Api, msg: Msg, model: Model) : [Model, Cmd<Msg>] {
+export function update(flags: Flags, api: Api, msg: Msg, model: Model) : [Model, Cmd<Msg>] {
     // console.log("update", msg);
     switch (msg.tag) {
         case "noop":
@@ -154,6 +164,26 @@ export function update(api: Api, msg: Msg, model: Model) : [Model, Cmd<Msg>] {
                 ...model,
                 listResponse: just(msg.r)
             })
+        case "open-build": {
+            switch (flags.tag) {
+                case "electron": {
+                    return Tuple.t2n(
+                        model,
+                        Task.attempt(
+                            Task.fromLambda(() => {
+                                flags.ipcSend("open-build", [msg.url]);
+                                return true;
+                            }),
+                            () => ({tag: "noop"})
+                        )
+                    )
+                }
+                case "browser": {
+                    return noCmd(model);
+                }
+            }
+            break;
+        }
         case "got-ws-message": {
             const data: any = msg.data;
             const decoded: Result<string,BuildInfo> =
@@ -227,3 +257,4 @@ class NotifTask extends Task<never, Notification> {
         callback(ok(n));
     }
 }
+
