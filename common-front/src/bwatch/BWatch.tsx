@@ -4,6 +4,9 @@ import {gotBuilds, gotWsMessage, Msg} from "./Msg";
 import {Api, BuildInfo, BuildInfoDecoder, ListResponse} from "bwatch-common";
 import {ViewBuildInfo} from "./ViewBuildInfo";
 
+if (Notification.permission !== "granted")
+    Notification.requestPermission();
+
 export type IpcSend = (channel: string, args: any[]) => void;
 
 export type Flags
@@ -111,12 +114,22 @@ function updateBuild(flags: Flags, model: Model, build: BuildInfo): [Model, Cmd<
                         url = build.status.url;
                     }
 
-                    if (needsNotif && flags.tag === "electron") {
+                    if (needsNotif) {
                         notifCmd = Task.perform(
                             notification(notifTitle(build), {
                                 body: notifBody(build),
-                            }, () => {
-                                flags.ipcSend("open-build", [url]);
+                            }, e => {
+                                switch (flags.tag) {
+                                    case "browser": {
+                                        e.preventDefault();
+                                        window.open(url, '_blank');
+                                        break;
+                                    }
+                                    case "electron": {
+                                        flags.ipcSend("open-build", [url]);
+                                        break;
+                                    }
+                                }
                             }),
                             () => ({tag: "noop"})
                         );
@@ -259,7 +272,7 @@ class WebSocketSub<M> extends Sub<M> {
 
 // notifications helper
 
-function notification(title: string, options: NotificationOptions, onClick: () => void): Task<never, Notification> {
+function notification(title: string, options: NotificationOptions, onClick: (e:Event) => void): Task<never, Notification> {
     return new NotifTask(title, options, onClick);
 }
 
@@ -267,14 +280,15 @@ class NotifTask extends Task<never, Notification> {
 
     constructor(private readonly title: string,
                 private readonly options: NotificationOptions,
-                private readonly onClick: () => void) {
+                private readonly onClick: (e:Event) => void) {
         super();
     }
 
     execute(callback: (r: Result<never, Notification>) => void): void {
+        debugger;
         const n = new Notification(this.title, this.options);
-        n.onclick = () => {
-            this.onClick()
+        n.onclick = e => {
+            this.onClick(e)
         };
         callback(ok(n));
     }
