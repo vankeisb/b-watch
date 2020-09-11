@@ -36,7 +36,7 @@ Start the webapp :
 Start the desktop app :
     
     cd electron-app
-    yarn start
+    yarn start -b ../bwatch.sample.json    
     
 > desktop app starts the daemon : careful if you already have the daemon running
 
