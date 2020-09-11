@@ -13,28 +13,6 @@ function apiUrl(serverUrl: string) {
     return serverUrl + "/api";
 }
 
-function getAccessToken(uuid: string, serverUrl: string, githubToken: string): Promise<string> {
-    const url = apiUrl(serverUrl) + '/auth/github';
-    console.log(uuid, "authenticating", url)
-    return fetch(url, {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({github_token: githubToken})
-    })
-        .then(r => r.json())
-        .then(obj => {
-            const accessToken = obj.access_token;
-            if (!accessToken) {
-                return error("No access token found in auth response");
-            }
-            console.log(uuid, "access token obtained", accessToken)
-            return accessToken;
-        });
-}
-
 function getBuildStatus(uuid: string, accessToken: string | undefined, config: TravisConfig): Promise<BuildStatus> {
     const encodedRepo = encodeURIComponent(config.repository);
     const encodedBranch = encodeURIComponent(config.branch);
@@ -78,6 +56,10 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
             }
             console.error(uuid, "unable to parse", obj);
             return error("unable to parse response");
+        })
+        .catch(e => {
+            console.error(e);
+            return error("fetch error " + e.message);
         });
 }
 
@@ -85,7 +67,7 @@ export interface TravisConfig {
     readonly serverUrl: string;
     readonly repository: string;
     readonly branch: string;
-    readonly githubToken?: string;
+    readonly token?: string;
 }
 
 export class TravisFetch extends Fetch<TravisConfig> {
@@ -94,21 +76,8 @@ export class TravisFetch extends Fetch<TravisConfig> {
 
     constructor(uuid: string, config: TravisConfig, onResult: (status: BuildStatus) => void) {
         super(uuid, config, onResult);
-        // TODO fix when using travis token
-        if (config.githubToken) {
-            getAccessToken(uuid, config.serverUrl, config.githubToken)
-                .then(token => {
-                    getBuildStatus(uuid, token, config)
-                        .then(onResult)
-                })
-                .catch(e => {
-                    console.error(uuid, "auth error", e);
-                    onResult(error("error while authenticating"));
-                })
-        } else {
-            getBuildStatus(uuid, undefined, config)
-                .then(onResult)
-        }
+        getBuildStatus(uuid, config.token, config)
+            .then(onResult)
     }
 
     cancel(): void {
@@ -118,7 +87,7 @@ export class TravisFetch extends Fetch<TravisConfig> {
 
 export const TravisConfigDecoder: Decoder<TravisConfig> =
     D.map4(
-        (serverUrl, repository, branch, githubToken) => ({ serverUrl, repository, branch, githubToken }),
+        (serverUrl, repository, branch, githubToken) => ({ serverUrl, repository, branch, token: githubToken }),
         D.field("serverUrl", D.str),
         D.field("repository", D.str),
         D.field("branch", D.str),
