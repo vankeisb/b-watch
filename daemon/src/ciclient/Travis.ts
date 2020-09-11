@@ -38,7 +38,7 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
                 let state = last_build.state;
                 let buildId = last_build.id;
                 let url = config.serverUrl + "/" + config.repository + "/builds/" + buildId;
-                if (state === "started") {
+                if (state === "started" || state === "created") {
                     state = last_build.previous_state;
                 }
                 if (state === "passed") {
