@@ -1,7 +1,13 @@
 import {app, BrowserWindow, Menu, Tray, ipcMain, shell} from 'electron';
-import {createServerFromArgs} from "bwatch-daemon";
+import {createServerFromArgs, parseArgs} from "bwatch-daemon";
 import chalk from "chalk";
 import * as path from "path";
+
+const args = parseArgs({
+    name: "bwatch",
+    description: "bwatch desktop app",
+    version: "0.0.1",
+});
 
 ipcMain.on("open-build", (event, args) => {
     const url = args[0];
@@ -27,10 +33,36 @@ function createWindow() {
         icon,
     });
 
+    ipcMain.once("app-ready", () => {
+
+        console.log("app ready, starting server");
+        const server = createServerFromArgs(args);
+        switch (server.tag) {
+            case "Ok": {
+                server.value.start(() => {
+                    console.log("server started, notifying app");
+                    win.webContents.send("server-ready", true);
+                });
+                break;
+            }
+            case "Err": {
+                console.log(chalk.red(server.err));
+                app.exit(1);
+                break;
+            }
+        }
+    });
+
+    ipcMain.on("renderer-ready", () => {
+        win.webContents.send("get-args", args);
+    });
+
     const dev = process.env.BW_ENV === "dev";
 
     win.removeMenu();
-    win.webContents.openDevTools();
+    if (dev) {
+        win.webContents.openDevTools();
+    }
 
     // and load the index.html of the app.
     // TODO file not at the same location when app is packaged
@@ -68,30 +100,11 @@ function createWindow() {
     tray.setToolTip('build-watcher')
     tray.setContextMenu(contextMenu)
 
-    const server = createServerFromArgs({
-        port: 4000,
-        buildsPath: "../bwatch.sample.json"
-    });
-
-    switch (server.tag) {
-        case "Ok": {
-            server.value.start(() => {
-                setTimeout(() => {
-                    console.log("server started, notifying app");
-                    win.webContents.send("server-ready", "ready");
-                }, 5000)
-            });
-            break;
-        }
-        case "Err": {
-            console.log(chalk.red(server.err));
-            app.exit(1);
-            break;
-        }
-    }
-
 }
 
 app.on('ready', createWindow);
+
+
+
 
 
