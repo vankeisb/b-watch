@@ -1,7 +1,6 @@
-import {Config} from "./Config";
 import {BuildStatus} from "bwatch-common";
 
-export abstract class Fetch<C extends Config> {
+export abstract class Fetch<C> {
 
     constructor(
         private uuid: string,

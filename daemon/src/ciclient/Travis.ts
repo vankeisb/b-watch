@@ -1,4 +1,3 @@
-import {Config} from "./Config";
 import {Fetch} from "./Fetch";
 import {BuildStatus, error, green, red} from "bwatch-common";
 import fetch from "node-fetch"
@@ -55,7 +54,7 @@ function getBuildStatus(uuid: string, accessToken: string, config: TravisConfig)
                 let buildId = last_build.id;
                 let url = config.serverUrl + "/" + config.repository + "/builds/" + buildId;
                 if (state === "started") {
-                    state = state.previous_state;
+                    state = last_build.previous_state;
                 }
                 if (state === "passed") {
                     return green(url);
@@ -75,7 +74,7 @@ function getBuildStatus(uuid: string, accessToken: string, config: TravisConfig)
         });
 }
 
-export interface TravisConfig extends Config {
+export interface TravisConfig {
     readonly serverUrl: string;
     readonly repository: string;
     readonly branch: string;

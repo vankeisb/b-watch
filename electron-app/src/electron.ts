@@ -1,7 +1,18 @@
-import {app, BrowserWindow, Menu, Tray} from 'electron';
-import {createServerFromArgs} from "bwatch-daemon";
+import {app, BrowserWindow, Menu, Tray, ipcMain, shell} from 'electron';
+import {createServerFromArgs, parseArgs} from "bwatch-daemon";
 import chalk from "chalk";
 import * as path from "path";
+
+const args = parseArgs({
+    name: "bwatch",
+    description: "bwatch desktop app",
+    version: "0.0.1",
+});
+
+ipcMain.on("open-build", (event, args) => {
+    const url = args[0];
+    shell.openExternal(url);
+});
 
 function createWindow() {
     const icons = {
@@ -13,7 +24,7 @@ function createWindow() {
 
     // Create the browser window.
     const win = new BrowserWindow({
-        width: 800,
+        width: 400,
         height: 600,
         webPreferences: {
             nodeIntegration: true
@@ -22,10 +33,36 @@ function createWindow() {
         icon,
     });
 
+    ipcMain.once("app-ready", () => {
+
+        console.log("app ready, starting server");
+        const server = createServerFromArgs(args);
+        switch (server.tag) {
+            case "Ok": {
+                server.value.start(() => {
+                    console.log("server started, notifying app");
+                    win.webContents.send("server-ready", true);
+                });
+                break;
+            }
+            case "Err": {
+                console.log(chalk.red(server.err));
+                app.exit(1);
+                break;
+            }
+        }
+    });
+
+    ipcMain.on("renderer-ready", () => {
+        win.webContents.send("get-args", args);
+    });
+
     const dev = process.env.BW_ENV === "dev";
 
     win.removeMenu();
-    // win.webContents.openDevTools();
+    if (dev) {
+        win.webContents.openDevTools();
+    }
 
     // and load the index.html of the app.
     // TODO file not at the same location when app is packaged
@@ -62,24 +99,12 @@ function createWindow() {
     )
     tray.setToolTip('build-watcher')
     tray.setContextMenu(contextMenu)
+
 }
 
 app.on('ready', createWindow);
 
-const server = createServerFromArgs({
-    port: 4000,
-    buildsPath: "../bwatch.sample.json"
-});
 
-switch (server.tag) {
-    case "Ok": {
-        server.value.start();
-        break;
-    }
-    case "Err": {
-        console.log(chalk.red(server.err));
-        app.exit(1);
-        break;
-    }
-}
+
+
 
