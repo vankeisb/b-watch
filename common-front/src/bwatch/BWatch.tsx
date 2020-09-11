@@ -7,21 +7,31 @@ import {ViewBuildInfo} from "./ViewBuildInfo";
 if (Notification.permission !== "granted")
     Notification.requestPermission();
 
-export type IpcSend = (channel: string, args: any[]) => void;
+let ws: WebSocket | undefined;
+
+export function connectToWs() {
+    console.log("connecting to ws");
+    ws = new WebSocket("ws://localhost:4000");
+}
+
+export interface Ipc {
+    send(channel: string, ...args: any[]): void;
+    on(channel: string, f:(...args: any[]) => void): void;
+}
 
 export type Flags
     = { tag: "browser" }
-    | { tag: "electron", ipcSend: IpcSend };
+    | { tag: "electron", ipc: Ipc };
 
 export interface Model {
     readonly listResponse: Maybe<Result<string,ListResponse>>;
 }
 
-export function init(api: Api): [Model, Cmd<Msg>] {
+export function init(flags: Flags, api: Api): [Model, Cmd<Msg>] {
     const model: Model = {
         listResponse: nothing
     };
-    return [ model, Task.attempt(api.list(), gotBuilds) ];
+    return listBuilds(api, model);
 }
 
 function viewPage(content: React.ReactNode) {
@@ -126,7 +136,7 @@ function updateBuild(flags: Flags, model: Model, build: BuildInfo): [Model, Cmd<
                                         break;
                                     }
                                     case "electron": {
-                                        flags.ipcSend("open-build", [url]);
+                                        flags.ipc.send("open-build", url);
                                         break;
                                     }
                                 }
@@ -138,7 +148,6 @@ function updateBuild(flags: Flags, model: Model, build: BuildInfo): [Model, Cmd<
                     return Tuple.t2n(newModel, notifCmd)
                 },
                 err => {
-                    // TODO recreate the list with only one build ?
                     console.warn("trying to update build whereas we have an error", err);
                     return noCmd(model);
                 }
@@ -172,13 +181,17 @@ function notifTitle(build: BuildInfo): string {
     }
 }
 
+function listBuilds(api: Api, model: Model): [Model, Cmd<Msg>] {
+    return [{...model, listResponse: nothing }, Task.attempt(api.list(), gotBuilds)];
+}
+
 export function update(flags: Flags, api: Api, msg: Msg, model: Model) : [Model, Cmd<Msg>] {
     // console.log("update", msg);
     switch (msg.tag) {
         case "noop":
             return noCmd(model);
         case "reload":
-            return init(api);
+            return listBuilds(api, model);
         case "got-builds":
             return noCmd({
                 ...model,
@@ -213,6 +226,20 @@ export function update(flags: Flags, api: Api, msg: Msg, model: Model) : [Model,
                     return noCmd(model);
                 }
             }
+            break;
+        }
+        case "server-ready": {
+            const connectCmd: Cmd<Msg> = Task.attempt(
+                Task.fromLambda(() => {
+                    connectToWs();
+                    return true;
+                }),
+                () => ({tag: "noop"})
+            );
+
+            return Tuple.fromNative(listBuilds(api, model))
+                .mapSecond(c => Cmd.batch([connectCmd, c]))
+                .toNative()
         }
     }
 }
@@ -222,7 +249,7 @@ function openBuild(flags: Flags, url: string): Cmd<Msg> {
         case "electron": {
             return Task.attempt(
                 Task.fromLambda(() => {
-                    flags.ipcSend("open-build", [url]);
+                    flags.ipc.send("open-build", url);
                     return true;
                 }),
                 () => ({tag: "noop"})
@@ -234,8 +261,18 @@ function openBuild(flags: Flags, url: string): Cmd<Msg> {
     }
 }
 
-export function subscriptions(ws: WebSocket): Sub<Msg> {
-    return onWebSocketMessage(ws, gotWsMessage);
+export function subscriptions(flags: Flags): Sub<Msg> {
+    let ipc: Sub<Msg> = Sub.none();
+    if (flags.tag === "electron") {
+        ipc = ipcSub<Msg>(flags.ipc, "server-ready", () => ({
+            tag: "server-ready"
+        }));
+    }
+    let wsSub: Sub<Msg> = Sub.none();
+    if (ws) {
+        wsSub = onWebSocketMessage(ws, gotWsMessage);
+    }
+    return Sub.batch([wsSub, ipc]);
 }
 
 // WS helper
@@ -261,6 +298,7 @@ class WebSocketSub<M> extends Sub<M> {
     }
 
     private readonly listener = (ev: MessageEvent) => {
+        console.log("ws event");
         this.dispatch(this.toMsg(ev.data));
     }
 
@@ -294,3 +332,47 @@ class NotifTask extends Task<never, Notification> {
     }
 }
 
+// ipc helper
+
+type IpcListener = (args: any[]) => void;
+
+let ipcListeners: { [id: string]: IpcListener } = {};
+let ipcSubs: IpcSub<any>[] = [];
+
+function ipcSub<M>(ipc: Ipc, channel: string, toMsg: (args: any[]) => M): Sub<M> {
+    return new IpcSub(ipc, channel, toMsg);
+}
+
+class IpcSub<M> extends Sub<M> {
+
+    constructor(
+        readonly ipc: Ipc,
+        readonly channel: string,
+        private readonly toMsg: (args: any[]) => M
+    ) {
+        super();
+    }
+
+    protected onInit() {
+        super.onInit();
+        ipcSubs.push(this);
+        if (ipcListeners[this.channel] === undefined) {
+            const l = (args: any[]) => {
+                ipcSubs
+                    .filter(s => s.channel === this.channel)
+                    .forEach(s => s.onIpcMessage(args));
+            }
+            ipcListeners[this.channel] = l;
+            this.ipc.on(this.channel, l);
+        }
+    }
+
+    protected onRelease() {
+        super.onRelease();
+        ipcSubs = ipcSubs.filter(s => s !== this);
+    }
+
+    onIpcMessage(args: any[]) {
+        this.dispatch(this.toMsg(args));
+    }
+}

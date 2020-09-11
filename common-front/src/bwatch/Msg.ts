@@ -6,6 +6,7 @@ export type Msg
     | { tag: "got-ws-message"; data: any }
     | { tag: "reload" }
     | { tag: "open-build", url: string }
+    | { tag: "server-ready" }
     | { tag: "noop" };
 
 
