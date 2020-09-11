@@ -15,9 +15,13 @@ Features :
     
 # Build / Test
 
+
 Project uses yarn workspaces. A convenience script can be used to build everything :
 
     ./build.sh
+
+> following instructions will use the `bwatch.sample.jcon` file, so you'll need to set `GITHUB_TOKEN` to a valid github token. You can use another file with the `--builds` option.
+
            
 Start the daemon :
 
