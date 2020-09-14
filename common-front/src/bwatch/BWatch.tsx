@@ -11,8 +11,9 @@ if (Notification.permission !== "granted")
 let ws: WebSocket | undefined;
 
 export function connectToWs(flags: Flags) {
-    console.log("connecting to ws", flags.daemonPort);
-    ws = new WebSocket("ws://localhost:" + flags.daemonPort);
+    const url = `ws://${getHost(flags)}:${flags.daemonPort}`;
+    console.log("connecting to ws", url);
+    ws = new WebSocket(url);
 }
 
 export interface Ipc {
@@ -22,14 +23,22 @@ export interface Ipc {
 
 export type Flags
     = { tag: "browser", daemonPort: number }
-    | { tag: "electron", daemonPort: number, ipc: Ipc };
+    | { tag: "electron", daemonPort: number, ipc: Ipc, remoteHost?: string };
 
 export interface Model {
     readonly listResponse: Maybe<Result<string,ListResponse>>;
 }
 
+const defaultHost = "localhost";
+
+export function getHost(flags: Flags): string {
+    return flags.tag === "electron"
+        ? (flags.remoteHost || defaultHost)
+        : defaultHost
+}
+
 export function remoteApi(flags: Flags): RemoteApi {
-    return new RemoteApi(`http://localhost:${flags.daemonPort}/api`);
+    return new RemoteApi(`http://${getHost(flags)}:${flags.daemonPort}/api`);
 }
 
 export function init(flags: Flags): [Model, Cmd<Msg>] {
@@ -284,6 +293,7 @@ export function subscriptions(flags: Flags): Sub<Msg> {
     let ipc: Sub<Msg> = Sub.none();
     if (flags.tag === "electron") {
         ipc = ipcSub<Msg>(flags.ipc, "server-ready", msgArgs => {
+            debugger;
             return {
                 tag: "server-ready",
                 args: msgArgs

@@ -69,7 +69,7 @@ export class Server {
         })
 
         const host = "0.0.0.0";
-        app.listen(this.port, host, () => {
+        server.listen(this.port, host, () => {
             console.log(`server started on http://${host}:${this.port}`)
             onStarted?.();
         });

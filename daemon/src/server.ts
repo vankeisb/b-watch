@@ -3,13 +3,7 @@
 import chalk from "chalk";
 import {createServerFromArgs, parseArgs} from "./ciclient/Cli";
 
-const mf = {
-    name: "bwatch-server",
-    description: "bwatch daemon + http server",
-    version: "0.0.1",
-};
-
-const server = createServerFromArgs(parseArgs(mf));
+const server = createServerFromArgs(parseArgs());
 
 switch (server.tag) {
     case "Ok": {
