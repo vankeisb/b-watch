@@ -68,8 +68,9 @@ export class Server {
 
         })
 
-        server.listen(this.port, "localhost", () => {
-            console.log(`server started on http://localhost:${this.port}`)
+        const host = "0.0.0.0";
+        server.listen(this.port, host, () => {
+            console.log(`server started on http://${host}:${this.port}`)
             onStarted?.();
         });
 
