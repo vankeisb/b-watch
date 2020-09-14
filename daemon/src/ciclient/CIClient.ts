@@ -73,7 +73,7 @@ export class Build {
                     if (this._polling) {
                         this.fetch();
                     }
-                }, 5000); // TODO config timeout
+                }, this._pollingInterval);
             }
         });
     }
