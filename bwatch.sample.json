@@ -10,19 +10,19 @@
       "serverUrl": "https://travis.ibm.com",
       "repository": "VANKEISB/diesel2",
       "branch": "develop",
-      "githubToken": "${process.env.TRAVIS_TOKEN}"
+      "token": "${process.env.TRAVIS_TOKEN}"
     },{
       "tag": "travis",
       "serverUrl": "https://travis.ibm.com",
       "repository": "VANKEISB/diesel2",
       "branch": "feature/json-providers",
-      "githubToken": "${process.env.TRAVIS_TOKEN}"
+      "token": "${process.env.TRAVIS_TOKEN}"
     },{
       "tag": "travis",
       "serverUrl": "https://travis.ibm.com",
       "repository": "dba/intellirule",
       "branch": "develop",
-      "githubToken": "${process.env.TRAVIS_TOKEN}"
+      "token": "${process.env.TRAVIS_TOKEN}"
     },{
       "tag": "travis",
       "serverUrl": "https://travis-ci.org",

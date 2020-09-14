@@ -89,12 +89,12 @@ export class TravisFetch extends Fetch<TravisConfig> {
 
 export const TravisConfigDecoder: Decoder<TravisConfig> =
     D.map4(
-        (serverUrl, repository, branch, githubToken) => ({ serverUrl, repository, branch, token: githubToken }),
+        (serverUrl, repository, branch, token) => ({ serverUrl, repository, branch, token }),
         D.field("serverUrl", D.str),
         D.field("repository", D.str),
         D.field("branch", D.str),
         D.oneOf([
-            D.field("githubToken", D.str),
+            D.field("token", D.str),
             D.succeed(undefined)
         ])
     );
