@@ -11,7 +11,7 @@
   },
   "scripts": {
     "clean": "rimraf build dist",
-    "compile": "webpack --config ./webpack.config.js",
+    "build": "webpack --config ./webpack.config.js",
     "start": "cross-env BW_ENV=dev electron ./build/electron.js",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"

@@ -43,5 +43,5 @@ Start the desktop app :
 # Build executable
 
     cd electron-app
-    yarn compile # if not compiled already
+    yarn build # if not compiled already
     yarn dist
