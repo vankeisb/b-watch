@@ -1,5 +1,8 @@
 @import "~bootstrap/dist/css/bootstrap.min.css";
 
+$border-color: #f1f1f1;
+$break-point: 700px;
+
 #root {
     position: absolute;
     top: 0;
@@ -30,17 +33,32 @@
     }
 
     .builds {
-        padding-top: 1rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        flex-direction: row;
-        flex-wrap: wrap;
-        display: inline-flex;
-        gap: 1rem;
+
+        @media only screen and (min-width: $break-point) {
+            padding-top: 1rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+            flex-direction: row;
+            flex-wrap: wrap;
+            display: inline-flex;
+            gap: 1rem;
+        }
 
         .card {
-            width: 20rem;
-            gap: 12px;
+
+            @media only screen and (max-width: $break-point) {
+                border-bottom: 1px solid $border-color;
+                border-left: none;
+                border-right: none;
+                border-top: none;
+                border-radius: 0;
+            }
+
+            @media only screen and (min-width: $break-point) {
+                width: 20rem;
+                gap: 12px;
+                border-color: $border-color;
+            }
 
             .status {
                 display: flex;
@@ -55,6 +73,10 @@
             .card-body {
                 display: flex;
                 flex-direction: column;
+
+                @media only screen and (max-width: $break-point) {
+                    padding: 0.5rem;
+                }
 
                 .error-text {
                     white-space: nowrap;
