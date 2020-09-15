@@ -15,73 +15,63 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+
+    .content {
+        flex-grow: 1;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .scroll-pane {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        overflow: auto;
+    }
+
+    .builds {
+        padding-top: 1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        flex-direction: row;
+        flex-wrap: wrap;
+        display: inline-flex;
+        gap: 1rem;
+
+        .card {
+            width: 20rem;
+            gap: 12px;
+
+            .status {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .badge {
+                margin-right: 0.5rem;
+            }
+
+            .card-body {
+                display: flex;
+                flex-direction: column;
+
+                .error-text {
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                }
+            }
+
+            .spacer {
+                flex-grow: 1;
+            }
+        }
+    }
+
+    .error {
+        padding: 1rem;
+    }
 }
 
-.bwatch h1 {
-    width: 100%;
-    background-color: lightgray;
-    padding-left: 1rem;
-}
-
-.bwatch .content {
-    flex-grow: 1;
-    overflow: hidden;
-    position: relative;
-}
-
-.scroll-pane {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    overflow: auto;
-}
-
-.bwatch .builds {
-    padding-top: 1rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    flex-direction: row;
-    flex-wrap: wrap;
-    display: inline-flex;
-    gap: 1rem;
-}
-
-.bwatch .builds .card {
-    width: 20rem;
-    gap: 12px;
-}
-
-.bwatch .builds .card .status {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-.bwatch .builds .card .badge {
-    margin-right: 0.5rem;
-}
-
-.card-body {
-    display: flex;
-    flex-direction: column;
-}
-
-.bwatch .builds .card .card-body {
-    display: flex;
-    flex-direction: column;
-}
-
-.bwatch .builds .card .card-body .error-text {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-.bwatch .builds .card .spacer {
-    flex-grow: 1;
-}
-
-.bwatch .error {
-    padding: 1rem;
-}
 
