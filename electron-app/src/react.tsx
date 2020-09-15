@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 import {DevTools, Program, withReduxDevTools} from "react-tea-cup";
 import {Flags, init, Model, Msg, subscriptions, update, view} from "bwatch-common-front";
 import * as electron from "electron";
-import "bwatch-common-front/bwatch.css";
+import "bwatch-common-front/dist/bwatch.css";
 import {Args} from "bwatch-daemon";
 
 export interface ElectronArgs extends Args {
