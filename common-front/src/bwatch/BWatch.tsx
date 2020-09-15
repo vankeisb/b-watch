@@ -4,6 +4,7 @@ import {gotBuilds, gotWsMessage, Msg} from "./Msg";
 import {Api, BuildInfo, BuildInfoDecoder, ListResponse, RemoteApi} from "bwatch-common";
 import {ViewBuildInfo} from "./ViewBuildInfo";
 import { ViewGroups } from "./ViewGroups";
+import {initialTab, Tab, TabType} from "./Tab";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -35,8 +36,6 @@ export type Flags
     | { tag: "electron", daemonPort: number, ipc: Ipc, remoteHost?: string };
 
 
-export type Tab = "builds" | "groups";
-
 export interface Model {
     readonly listResponse: Maybe<Result<string,ListResponse>>;
     readonly tab: Tab;
@@ -57,7 +56,7 @@ export function remoteApi(flags: Flags): RemoteApi {
 export function init(flags: Flags): [Model, Cmd<Msg>] {
     const model: Model = {
         listResponse: nothing,
-        tab: "builds"
+        tab: { tag: "builds" }
     };
     switch (flags.tag) {
         case "browser": {
@@ -78,18 +77,18 @@ export function init(flags: Flags): [Model, Cmd<Msg>] {
 
 function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
 
-    function navLinkClass(tab: Tab) {
+    function navLinkClass(tab: TabType) {
         return "nav-link" + (
-            model.tab === tab
+            model.tab.tag === tab
                 ? " active"
                 : ""
         );
     }
 
-    function navItem(tab: Tab) {
+    function navItem(tab: TabType) {
         return (
             <li className="nav-item" key={tab}>
-                <a className={navLinkClass(tab)} 
+                <a className={navLinkClass(tab)}
                     href="#"
                     onClick={e => {
                         e.preventDefault();
@@ -116,11 +115,11 @@ function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
 
 function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
     return model.listResponse
-        .map(r => 
+        .map(r =>
             r.match(
                 listResponse => {
-                    switch (model.tab) {
-                        case "builds": 
+                    switch (model.tab.tag) {
+                        case "builds":
                             return (
                                 <div className="builds">
                                     {listResponse.builds.map(build => (
@@ -134,10 +133,10 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
                             );
                         case "groups": {
                             return (
-                                <ViewGroups listResponse={listResponse}/>
+                                <ViewGroups dispatch={dispatch} listResponse={listResponse}/>
                             )
                         }
-                    }                
+                    }
                 },
                 err => {
                     return (
@@ -154,7 +153,7 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
                         </div>
                     )
                 }
-            )       
+            )
         )
         .withDefaultSupply(() => (
             <p>Loading...</p>
@@ -331,8 +330,11 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
         case "tab-clicked": {
             return noCmd({
                 ...model,
-                tab: msg.tab
+                tab: initialTab(msg.tab)
             });
+        }
+        case "open-group": {
+            return noCmd(model)
         }
     }
 }
