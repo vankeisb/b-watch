@@ -37,7 +37,8 @@
       "tag": "travis",
       "serverUrl": "https://travis-ci.org",
       "repository": "vankeisb/b-watch",
-      "branch": "master"
+      "branch": "master",
+      "groups": ["g1", "g2"]
     }
   ]
 }

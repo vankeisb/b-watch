@@ -70,6 +70,17 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
             break;
         }
     }
+    const groupItems = props.buildInfo.groups.map(group => (
+        <span className="badge badge-pill badge-primary">{group}</span>
+    ));
+    const groups = props.buildInfo.groups.length > 0
+        ? (
+            <h6 className="card-subtitle mb-2 text-muted">
+                {groupItems}
+            </h6>
+        )
+        : undefined;
+
     return (
         <div className="card">
             <div className="card-body">
@@ -77,6 +88,7 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
                 {subtitle &&
                 <h6 className="card-subtitle mb-2 text-muted">{subtitle}</h6>
                 }
+                {groups}
                 <div className="spacer"/>
                 <div className="status">
                     <ViewStatus status={props.buildInfo.status}/>
