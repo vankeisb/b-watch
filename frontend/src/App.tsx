@@ -6,7 +6,7 @@ import {connectToWs} from "bwatch-common-front/dist/bwatch/BWatch";
 
 const flags: Flags = {
   tag: "browser",
-  daemonPort: 3000,
+  daemonPort: 4000,
 };
 
 connectToWs(flags);

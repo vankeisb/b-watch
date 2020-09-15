@@ -3,7 +3,6 @@ import React from "react";
 import {gotBuilds, gotWsMessage, Msg} from "./Msg";
 import {Api, BuildInfo, BuildInfoDecoder, ListResponse, RemoteApi} from "bwatch-common";
 import {ViewBuildInfo} from "./ViewBuildInfo";
-import {Args} from "bwatch-daemon";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -14,6 +13,15 @@ export function connectToWs(flags: Flags) {
     const url = `ws://${getHost(flags)}:${flags.daemonPort}`;
     console.log("connecting to ws", url);
     ws = new WebSocket(url);
+    ws.addEventListener("open", () => {
+        console.log("websocket opened", url);
+    });
+    ws.addEventListener("close", () => {
+        console.log("websocket closed", url);
+    });
+    ws.addEventListener("error", ev => {
+        console.error("websocket error", ev);
+    })
 }
 
 export interface Ipc {
@@ -330,6 +338,7 @@ class WebSocketSub<M> extends Sub<M> {
     }
 
     private readonly listener = (ev: MessageEvent) => {
+        // console.log("wsEvt", ev.data);
         this.dispatch(this.toMsg(ev.data));
     }
 

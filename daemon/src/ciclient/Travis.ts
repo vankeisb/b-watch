@@ -30,6 +30,12 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
         headers['Authorization'] = 'token ' + accessToken;
     }
     return fetch(url, {headers})
+        .then(r => {
+            if (r.status !== 200) {
+                throw new Error(`HTTP status ${r.status}`)
+            }
+            return r;
+        })
         .then(r => r.json())
         .then(obj => {
             const { last_build } = obj;
@@ -60,8 +66,7 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
             return error("unable to parse response");
         })
         .catch(e => {
-            console.error(e);
-            return error("fetch error " + e.message);
+            return error(e.message);
         });
 }
 
