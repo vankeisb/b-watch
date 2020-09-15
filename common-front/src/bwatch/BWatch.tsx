@@ -3,6 +3,7 @@ import React from "react";
 import {gotBuilds, gotWsMessage, Msg} from "./Msg";
 import {Api, BuildInfo, BuildInfoDecoder, ListResponse, RemoteApi} from "bwatch-common";
 import {ViewBuildInfo} from "./ViewBuildInfo";
+import { ViewGroups } from "./ViewGroups";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -33,8 +34,12 @@ export type Flags
     = { tag: "browser", daemonPort: number }
     | { tag: "electron", daemonPort: number, ipc: Ipc, remoteHost?: string };
 
+
+export type Tab = "builds" | "groups";
+
 export interface Model {
     readonly listResponse: Maybe<Result<string,ListResponse>>;
+    readonly tab: Tab;
 }
 
 const defaultHost = "localhost";
@@ -51,7 +56,8 @@ export function remoteApi(flags: Flags): RemoteApi {
 
 export function init(flags: Flags): [Model, Cmd<Msg>] {
     const model: Model = {
-        listResponse: nothing
+        listResponse: nothing,
+        tab: "builds"
     };
     switch (flags.tag) {
         case "browser": {
@@ -70,56 +76,101 @@ export function init(flags: Flags): [Model, Cmd<Msg>] {
     }
 }
 
-function viewPage(content: React.ReactNode) {
+function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
+
+    function navLinkClass(tab: Tab) {
+        return "nav-link" + (
+            model.tab === tab
+                ? " active"
+                : ""
+        );
+    }
+
+    function navItem(tab: Tab) {
+        return (
+            <li className="nav-item" key={tab}>
+                <a className={navLinkClass(tab)} 
+                    href="#"
+                    onClick={e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dispatch({
+                            tag: "tab-clicked",
+                            tab
+                        })
+                    }}
+                >
+                    {tab}
+                </a>
+            </li>
+        )
+    }
+
+    return (
+        <ul className="nav nav-tabs">
+            {navItem("builds")}
+            {navItem("groups")}
+        </ul>
+    )
+}
+
+function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
+    return model.listResponse
+        .map(r => 
+            r.match(
+                listResponse => {
+                    switch (model.tab) {
+                        case "builds": 
+                            return (
+                                <div className="builds">
+                                    {listResponse.builds.map(build => (
+                                        <ViewBuildInfo
+                                            key={build.uuid}
+                                            dispatch={dispatch}
+                                            buildInfo={build}
+                                            flags={flags}/>
+                                    ))}
+                                </div>
+                            );
+                        case "groups": {
+                            return (
+                                <ViewGroups listResponse={listResponse}/>
+                            )
+                        }
+                    }                
+                },
+                err => {
+                    return (
+                        <div className="error">
+                            <div className="alert alert-danger">
+                                <strong>Error!</strong> {err}
+                            </div>
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={() => dispatch({ tag: "reload" })}>
+                                ↻ Reload
+                            </button>
+                        </div>
+                    )
+                }
+            )       
+        )
+        .withDefaultSupply(() => (
+            <p>Loading...</p>
+        ))}
+
+export function view(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
     return (
         <div className="bwatch">
             <div className="content">
+                {viewTabs(dispatch, model)}
                 <div className="scroll-pane">
-                    {content}
+                    {viewTabContent(flags, dispatch, model)}
                 </div>
             </div>
         </div>
     )
-}
-
-export function view(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
-
-    return viewPage(
-        model.listResponse
-            .map(respRes =>
-                respRes.match(
-                    listResponse => (
-                        <div className="builds">
-                            {listResponse.builds.map(build => (
-                                <ViewBuildInfo
-                                    key={build.uuid}
-                                    dispatch={dispatch}
-                                    buildInfo={build}
-                                    flags={flags}/>
-                            ))}
-                        </div>
-                    ),
-                    err => {
-                        return (
-                            <div className="error">
-                                <div className="alert alert-danger">
-                                    <strong>Error!</strong> {err}
-                                </div>
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={() => dispatch({ tag: "reload" })}>
-                                    ↻ Reload
-                                </button>
-                            </div>
-                        )
-                    }
-                )
-            )
-            .withDefaultSupply(() => (
-                <p>Loading...</p>
-            ))
-    );
 }
 
 function noCmd(model: Model): [Model,Cmd<Msg>] {
@@ -276,6 +327,12 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
             return Tuple.fromNative(listBuilds(remoteApi(flags), model))
                 .mapSecond(c => Cmd.batch([connectCmd, c]))
                 .toNative()
+        }
+        case "tab-clicked": {
+            return noCmd({
+                ...model,
+                tab: msg.tab
+            });
         }
     }
 }

@@ -10,13 +10,15 @@
       "serverUrl": "https://travis.ibm.com",
       "repository": "VANKEISB/diesel2",
       "branch": "develop",
-      "token": "${process.env.TRAVIS_TOKEN}"
+      "token": "${process.env.TRAVIS_TOKEN}",
+      "groups": [ "diesel", "g2"]
     },{
       "tag": "travis",
       "serverUrl": "https://travis.ibm.com",
       "repository": "VANKEISB/diesel2",
       "branch": "feature/json-providers",
-      "token": "${process.env.TRAVIS_TOKEN}"
+      "token": "${process.env.TRAVIS_TOKEN}",
+      "groups": [ "diesel", "g1"]
     },{
       "tag": "travis",
       "serverUrl": "https://travis.ibm.com",
@@ -27,18 +29,26 @@
       "tag": "travis",
       "serverUrl": "https://travis-ci.org",
       "repository": "vankeisb/react-tea-cup",
-      "branch": "develop"
+      "branch": "develop",
+      "groups": [ "tea-cup", "g2"]
+    },{
+      "tag": "travis",
+      "serverUrl": "https://travis-ci.org",
+      "repository": "vankeisb/react-tea-cup",
+      "branch": "master",
+      "groups": [ "tea-cup", "g1"]
     },{
       "tag": "travis",
       "serverUrl": "https://travis-ci.org",
       "repository": "vankeisb/b-watch",
-      "branch": "develop"
+      "branch": "develop",
+      "groups": ["b-watch", "g2"]
     },{
       "tag": "travis",
       "serverUrl": "https://travis-ci.org",
       "repository": "vankeisb/b-watch",
       "branch": "master",
-      "groups": ["g1", "g2"]
+      "groups": ["b-watch", "g1", "g2"]
     }
   ]
 }

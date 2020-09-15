@@ -1,5 +1,6 @@
 import {Result} from "react-tea-cup";
 import {ListResponse} from "bwatch-common";
+import { Tab } from "./BWatch";
 
 export type Msg
     = { tag: "got-builds"; r: Result<string, ListResponse> }
@@ -7,6 +8,7 @@ export type Msg
     | { tag: "reload" }
     | { tag: "open-build", url: string }
     | { tag: "server-ready" }
+    | { tag: "tab-clicked", tab: Tab }
     | { tag: "noop" };
 
 

@@ -71,7 +71,7 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
         }
     }
     const groupItems = props.buildInfo.groups.map(group => (
-        <span className="badge badge-pill badge-primary">{group}</span>
+        <span key={group} className="badge badge-pill badge-primary">{group}</span>
     ));
     const groups = props.buildInfo.groups.length > 0
         ? (
