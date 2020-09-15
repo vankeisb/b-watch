@@ -11,6 +11,7 @@
   },
   "scripts": {
     "clean": "rimraf dist && rimraf build",
+    "build:tsc": "tsc",
     "build:scss": "node-sass --include-path ./node_modules src/bwatch.scss dist/bwatch.css",
     "build": "npm run clean && tsc && npm run build:scss",
     "watch": "npm-scripts-watcher",
@@ -18,7 +19,7 @@
   },
   "watch": {
     "src/**/*.ts": [
-      "tsc"
+      "build:tsc"
     ],
     "src/**/*.scss": [
       "build:scss"
