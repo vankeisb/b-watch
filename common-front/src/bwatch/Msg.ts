@@ -1,5 +1,8 @@
 import {Result} from "react-tea-cup";
 import {ListResponse} from "bwatch-common";
+import {Group} from "./Group";
+import {TabType} from "./Tab";
+import {Settings} from "./Settings";
 
 export type Msg
     = { tag: "got-builds"; r: Result<string, ListResponse> }
@@ -7,6 +10,12 @@ export type Msg
     | { tag: "reload" }
     | { tag: "open-build", url: string }
     | { tag: "server-ready" }
+    | { tag: "tab-clicked", tab: TabType }
+    | { tag: "open-group", group: Group }
+    | { tag: "close-group" }
+    | { tag: "got-settings", settings: Settings }
+    | { tag: "toggle-notifications-enabled" }
+    | { tag: "toggle-dark-mode" }
     | { tag: "noop" };
 
 

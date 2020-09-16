@@ -6,6 +6,7 @@ export interface BuildInfo {
     readonly uuid: string;
     readonly info: Info;
     readonly status: BuildStatus;
+    readonly groups: readonly string[];
 }
 
 export type Info
@@ -52,9 +53,13 @@ export const InfoDecoder: Decoder<Info> =
     );
 
 export const BuildInfoDecoder: Decoder<BuildInfo> =
-    D.map3(
-        (uuid, info, status) => ({tag: "build-info", uuid, info, status}),
+    D.map4(
+        (uuid, info, status, groups) => ({tag: "build-info", uuid, info, status, groups}),
         D.field("uuid", D.str),
         D.field("info", InfoDecoder),
-        D.field("status", BuildStatusDecoder)
-    )
+        D.field("status", BuildStatusDecoder),
+        D.oneOf([
+            D.field("groups", D.array(D.str)),
+            D.succeed([])
+        ])
+    );

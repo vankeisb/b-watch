@@ -30,6 +30,12 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
         headers['Authorization'] = 'token ' + accessToken;
     }
     return fetch(url, {headers})
+        .then(r => {
+            if (r.status !== 200) {
+                throw new Error(`HTTP status ${r.status}`)
+            }
+            return r;
+        })
         .then(r => r.json())
         .then(obj => {
             const { last_build } = obj;
@@ -40,7 +46,9 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
                 let url = config.serverUrl + "/" + config.repository + "/builds/" + buildId;
                 if (state === "started" || state === "created") {
                     state = last_build.previous_state;
+                    console.log("using previous state", state);
                 }
+                console.log("state", "'" + state + "'");
                 if (state === "passed") {
                     return green(url);
                 } else if (state === "failed") {
@@ -58,8 +66,7 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
             return error("unable to parse response");
         })
         .catch(e => {
-            console.error(e);
-            return error("fetch error " + e.message);
+            return error(e.message);
         });
 }
 
@@ -87,12 +94,12 @@ export class TravisFetch extends Fetch<TravisConfig> {
 
 export const TravisConfigDecoder: Decoder<TravisConfig> =
     D.map4(
-        (serverUrl, repository, branch, githubToken) => ({ serverUrl, repository, branch, token: githubToken }),
+        (serverUrl, repository, branch, token) => ({ serverUrl, repository, branch, token }),
         D.field("serverUrl", D.str),
         D.field("repository", D.str),
         D.field("branch", D.str),
         D.oneOf([
-            D.field("githubToken", D.str),
+            D.field("token", D.str),
             D.succeed(undefined)
         ])
     );

@@ -10,4 +10,4 @@ cd common-front && yarn build && cd .. && \
 echo "*** frontend ***" && \
 cd frontend && yarn build && cd .. && \
 echo "*** electron-app ***" && \
-cd electron-app && yarn clean && yarn compile # && yarn dist \
+cd electron-app && yarn clean && yarn build # && yarn dist \

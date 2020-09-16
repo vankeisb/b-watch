@@ -1,13 +1,34 @@
 import {app, BrowserWindow, Menu, Tray, ipcMain, shell} from 'electron';
-import {createServerFromArgs, parseArgs} from "bwatch-daemon";
+import {Args, createServerFromArgs, defaultFile, defaultPort} from "bwatch-daemon";
 import chalk from "chalk";
 import * as path from "path";
+import {Command} from "commander";
 
-const args = parseArgs({
-    name: "bwatch",
-    description: "bwatch desktop app",
-    version: "0.0.1",
-});
+export interface ElectronArgs extends Args {
+    remoteHost?: string;
+}
+
+
+export function parseElectronArgs(): ElectronArgs {
+    const program = new Command();
+    program
+        .name("bwatch")
+        .description("the b-watch app")
+        .version("0.0.1")
+        .option("-b, --builds <path>", `Path to the builds JSON file (defaults to ~/${defaultFile})`)
+        .option("-p, --port <port>", `Web server port (defaults to ${defaultPort})`)
+        .option("-r, --remote <host>", "Do not start daemon, instead use a remote one")
+    program.parse(process.argv);
+
+    return {
+        buildsPath: program.builds || defaultFile,
+        port: program.port || defaultPort,
+        remoteHost: program.remote
+    }
+}
+
+
+const args: ElectronArgs = parseElectronArgs();
 
 ipcMain.on("open-build", (event, args) => {
     const url = args[0];
@@ -35,22 +56,28 @@ function createWindow() {
 
     ipcMain.once("app-ready", () => {
 
-        console.log("app ready, starting server");
-        const server = createServerFromArgs(args);
-        switch (server.tag) {
-            case "Ok": {
-                server.value.start(() => {
-                    console.log("server started, notifying app");
-                    win.webContents.send("server-ready", true);
-                });
-                break;
-            }
-            case "Err": {
-                console.log(chalk.red(server.err));
-                app.exit(1);
-                break;
+        if (args.remoteHost) {
+            console.log("remote host provided", chalk.green(args.remoteHost), chalk.yellow("will not start local daemon"));
+            win.webContents.send("server-ready", args);
+        } else {
+            console.log("app ready, starting server");
+            const server = createServerFromArgs(args);
+            switch (server.tag) {
+                case "Ok": {
+                    server.value.start(() => {
+                        console.log("server started, notifying app");
+                        win.webContents.send("server-ready", args);
+                    });
+                    break;
+                }
+                case "Err": {
+                    console.log(chalk.red(server.err));
+                    app.exit(1);
+                    break;
+                }
             }
         }
+
     });
 
     ipcMain.on("renderer-ready", () => {

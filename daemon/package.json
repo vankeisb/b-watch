@@ -8,6 +8,8 @@
     "@types/commander": "^2.12.2",
     "@types/express": "^4.17.8",
     "@types/node-fetch": "^2.5.7",
+    "@types/superagent": "^4.1.10",
+    "@types/superagent-proxy": "^2.0.0",
     "@types/uuid": "^8.3.0",
     "@types/ws": "^7.2.6",
     "bwatch-common": "0.0.1",

@@ -1,9 +1,17 @@
 import {Cmd, Dispatcher, just, Maybe, nothing, ok, Result, Sub, Task, Tuple} from "react-tea-cup";
-import React from "react";
+import * as React from "react";
 import {gotBuilds, gotWsMessage, Msg} from "./Msg";
 import {Api, BuildInfo, BuildInfoDecoder, ListResponse, RemoteApi} from "bwatch-common";
 import {ViewBuildInfo} from "./ViewBuildInfo";
-import {Args} from "bwatch-daemon";
+import {ViewGroups} from "./ViewGroups";
+import {initialTab, Tab, TabType} from "./Tab";
+import {Flags, Ipc} from "./Flags";
+import {linkToBuild} from "./LinkToBuild";
+import {computeGroup} from "./Group";
+import {ViewSettings} from "./ViewSettings";
+import {defaultSettings, loadSettingsFromLocalStorage, saveSettingsToLocalStorage, Settings} from "./Settings";
+import {displayTheme, Theme} from "./ThemeConfig";
+import {fromLambdaSuccess} from "./TaskSuccessfulFromLambda";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -11,34 +19,53 @@ if (Notification.permission !== "granted")
 let ws: WebSocket | undefined;
 
 export function connectToWs(flags: Flags) {
-    console.log("connecting to ws", flags.daemonPort);
-    ws = new WebSocket("ws://localhost:" + flags.daemonPort);
+    const url = `ws://${getHost(flags)}:${flags.daemonPort}`;
+    console.log("connecting to ws", url);
+    ws = new WebSocket(url);
+    ws.addEventListener("open", () => {
+        console.log("websocket opened", url);
+    });
+    ws.addEventListener("close", () => {
+        console.log("websocket closed", url);
+    });
+    ws.addEventListener("error", ev => {
+        console.error("websocket error", ev);
+    })
 }
-
-export interface Ipc {
-    send(channel: string, ...args: any[]): void;
-    on(channel: string, f:(args: any[]) => void): void;
-}
-
-export type Flags
-    = { tag: "browser", daemonPort: number }
-    | { tag: "electron", daemonPort: number, ipc: Ipc };
 
 export interface Model {
     readonly listResponse: Maybe<Result<string,ListResponse>>;
+    readonly tab: Tab;
+    readonly settings: Maybe<Settings>;
+}
+
+const defaultHost = "localhost";
+
+export function getHost(flags: Flags): string {
+    return flags.tag === "electron"
+        ? (flags.remoteHost || defaultHost)
+        : defaultHost
 }
 
 export function remoteApi(flags: Flags): RemoteApi {
-    return new RemoteApi(`http://localhost:${flags.daemonPort}/api`);
+    return new RemoteApi(`http://${getHost(flags)}:${flags.daemonPort}/api`);
 }
 
 export function init(flags: Flags): [Model, Cmd<Msg>] {
     const model: Model = {
-        listResponse: nothing
+        listResponse: nothing,
+        tab: { tag: "builds" },
+        settings: nothing
     };
+    const loadSettings: Cmd<Msg> = Task.perform(
+        loadSettingsFromLocalStorage(),
+        settings => ({ tag: "got-settings", settings })
+    )
     switch (flags.tag) {
         case "browser": {
-            return listBuilds(remoteApi(flags), model);
+            return Tuple.fromNative(listBuilds(remoteApi(flags), model))
+                .mapSecond(c => Cmd.batch([c, loadSettings]))
+                .toNative();
         }
         case "electron": {
             console.log("app ready");
@@ -47,63 +74,249 @@ export function init(flags: Flags): [Model, Cmd<Msg>] {
             })
             return Tuple.t2n(
                 model,
-                Task.attempt(notifyAppReady, () => ({tag: "noop"}))
+                Cmd.batch([
+                    Task.attempt(notifyAppReady, () => ({tag: "noop"})),
+                    loadSettings
+                ])
             )
         }
     }
 }
 
-function viewPage(content: React.ReactNode) {
+function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
+
+    function navLinkClass(tab: TabType) {
+        return "nav-link" + (
+            model.tab.tag === tab
+                ? " active"
+                : ""
+        );
+    }
+
+    function navItem(tab: TabType) {
+        return (
+            <li className="nav-item" key={tab}>
+                <a className={navLinkClass(tab)}
+                    href="#"
+                    onClick={e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dispatch({
+                            tag: "tab-clicked",
+                            tab
+                        })
+                    }}
+                >
+                    {tab}
+                </a>
+            </li>
+        )
+    }
+
     return (
-        <div className="bwatch">
-            <div className="content">
-                <div className="scroll-pane">
-                    {content}
-                </div>
-            </div>
-        </div>
+        <ul className="nav nav-tabs">
+            {navItem("builds")}
+            {navItem("groups")}
+            {navItem("settings")}
+        </ul>
     )
 }
 
-export function view(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
-
-    return viewPage(
-        model.listResponse
-            .map(respRes =>
-                respRes.match(
-                    listResponse => (
-                        <div className="builds">
-                            {listResponse.builds.map(build => (
-                                <ViewBuildInfo
-                                    key={build.uuid}
-                                    dispatch={dispatch}
-                                    buildInfo={build}
-                                    flags={flags}/>
-                            ))}
-                        </div>
-                    ),
-                    err => {
-                        return (
-                            <div className="error">
-                                <div className="alert alert-danger">
-                                    <strong>Error!</strong> {err}
+function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
+    return model.listResponse
+        .map(r =>
+            r.match(
+                listResponse => {
+                    switch (model.tab.tag) {
+                        case "builds":
+                            return (
+                                <div className="builds">
+                                    {listResponse.builds.map(build => (
+                                        <ViewBuildInfo
+                                            key={build.uuid}
+                                            dispatch={dispatch}
+                                            buildInfo={build}
+                                            flags={flags}/>
+                                    ))}
                                 </div>
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={() => dispatch({ tag: "reload" })}>
-                                    ↻ Reload
-                                </button>
+                            );
+                        case "groups": {
+                            return (
+                                <ViewGroups dispatch={dispatch} listResponse={listResponse}/>
+                            )
+                        }
+                        case "settings": {
+                            return (
+                                <ViewSettings dispatch={dispatch} settings={model.settings}/>
+                            )
+                        }
+                    }
+                },
+                err => {
+                    return (
+                        <div className="error">
+                            <div className="alert alert-danger">
+                                <strong>Error!</strong> {err}
+                            </div>
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={() => dispatch({ tag: "reload" })}>
+                                ↻ Reload
+                            </button>
+                        </div>
+                    )
+                }
+            )
+        )
+        .withDefaultSupply(() => (
+            <p>Loading...</p>
+        ))}
+
+export function view(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
+    return (
+        <>
+            {viewModal(flags, dispatch, model)}
+            <div className="bwatch">
+                {viewTabs(dispatch, model)}
+                <div className="content">
+                    <div className="scroll-pane">
+                        {viewTabContent(flags, dispatch, model)}
+                    </div>
+                </div>
+            </div>
+            { model.tab.tag === "groups" && model.tab.selectedGroup.isJust()
+                ? <div className="modal-backdrop show"></div>
+                : <></>
+            }
+        </>
+    )
+}
+
+function viewModal(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
+    return model.listResponse
+        .map(listResponse => {
+            if (model.tab.tag === "groups") {
+                return model.tab.selectedGroup
+                    .map(selectedGroup => {
+                        const group = computeGroup(selectedGroup, listResponse.map(lr => lr.builds).withDefault([]))
+                        return (
+                            <div className="modal" tabIndex={-1}>
+                                <div className="modal-dialog">
+                                    <div className="modal-content">
+                                        <div className="modal-header">
+                                            <h5 className="modal-title">{group.name}</h5>
+                                            <button type="button" className="close" aria-label="Close"
+                                                    onClick={() => dispatch({tag: "close-group"})}>
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div className="modal-body">
+                                            <h6><span className="badge badge-primary">TOTAL</span></h6>
+                                            <p>
+                                                {group.total} build(s)
+                                            </p>
+                                            {group.nbOk > 0
+                                                ? (
+                                                    <>
+                                                        <h6>
+                                                            <span className="badge badge-success">PASSING</span>
+                                                        </h6>
+                                                        <ul>
+                                                            {group.builds
+                                                                .filter(b => b.status.tag === "green")
+                                                                .map(b => getGroupBuildLink(flags, dispatch, b))
+                                                            }
+                                                        </ul>
+                                                    </>
+                                                )
+                                                : <></>
+                                            }
+                                            {group.nbKo > 0
+                                                ? (
+                                                    <>
+                                                        <h6>
+                                                            <span className="badge badge-danger">FAILED</span>
+                                                        </h6>
+                                                        <ul>
+                                                            {group.builds
+                                                                .filter(b => b.status.tag === "red")
+                                                                .map(b => getGroupBuildLink(flags, dispatch, b))
+                                                            }
+                                                        </ul>
+                                                    </>
+                                                )
+                                                : <></>
+                                            }
+                                            {group.nbErr > 0
+                                                ? (
+                                                    <>
+                                                        <h6>
+                                                            <span className="badge badge-warning">ERROR</span>
+                                                        </h6>
+                                                        <ul>
+                                                            {group.builds
+                                                                .filter(b => b.status.tag === "error")
+                                                                .map(b => getGroupBuildLink(flags, dispatch, b))
+                                                            }
+                                                        </ul>
+                                                    </>
+                                                )
+                                                : <></>
+                                            }
+                                            {group.nbNone > 0
+                                                ? (
+                                                    <>
+                                                        <h6>
+                                                            <span className="badge badge-secondary">LOADING</span>
+                                                        </h6>
+                                                        <ul>
+                                                            {group.builds
+                                                                .filter(b => b.status.tag === "none")
+                                                                .map(b => getGroupBuildLink(flags, dispatch, b))
+                                                            }
+                                                        </ul>
+                                                    </>
+                                                )
+                                                : <></>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )
-                    }
-                )
-            )
-            .withDefaultSupply(() => (
-                <p>Loading...</p>
-            ))
+                    })
+                    .withDefault(<></>);
+            }
+            return <></>;
+        })
+        .withDefault(<></>);
+}
+
+function getGroupBuildLink(flags: Flags, dispatch: Dispatcher<Msg>, build: BuildInfo) {
+    let text: string;
+    switch (build.info.tag) {
+        case "bamboo": {
+            text = build.info.plan;
+            break;
+        }
+        case "travis": {
+            text = build.info.repository + "/" + build.info.branch;
+            break;
+        }
+    }
+    return (
+        <li key={text}>
+            {linkToBuild({
+                flags,
+                dispatch,
+                status: build.status,
+                text
+            }).withDefault(<span>{text}</span>)}
+        </li>
     );
 }
+
 
 function noCmd(model: Model): [Model,Cmd<Msg>] {
     return [model, Cmd.none()];
@@ -118,14 +331,14 @@ function updateBuild(flags: Flags, model: Model, build: BuildInfo): [Model, Cmd<
                     const { builds } = listResp;
                     const index = builds.findIndex(b => b.uuid === build.uuid);
                     let newBuilds = [...builds];
-                    let needsNotif;
+                    let needsNotif = model.settings.map(s => s.notificationsEnabled).withDefault(true)
                     if (index === -1) {
-                        needsNotif = true;
+                        needsNotif = needsNotif && true;
                         newBuilds = builds.concat([build]);
                     }  else {
                         const prevBuild = builds[index];
                         newBuilds[index] = build;
-                        needsNotif = prevBuild.status.tag !== "none" && prevBuild.status.tag !== build.status.tag;
+                        needsNotif = needsNotif && prevBuild.status.tag !== "none" && prevBuild.status.tag !== build.status.tag;
                     }
                     const newResp: ListResponse = {
                         ...listResp,
@@ -144,7 +357,7 @@ function updateBuild(flags: Flags, model: Model, build: BuildInfo): [Model, Cmd<
                     }
 
                     if (needsNotif) {
-                        notifCmd = Task.perform(
+                        notifCmd = taskToCmdNoop(
                             notification(notifTitle(build), {
                                 body: notifBody(build),
                             }, e => {
@@ -159,8 +372,7 @@ function updateBuild(flags: Flags, model: Model, build: BuildInfo): [Model, Cmd<
                                         break;
                                     }
                                 }
-                            }),
-                            () => ({tag: "noop"})
+                            })
                         );
                     }
 
@@ -260,7 +472,89 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
                 .mapSecond(c => Cmd.batch([connectCmd, c]))
                 .toNative()
         }
+        case "tab-clicked": {
+            return noCmd(
+                {
+                    ...model,
+                    tab: initialTab(msg.tab)
+                }
+            );
+        }
+        case "open-group": {
+            if (model.tab.tag === "groups") {
+                return noCmd({
+                    ...model,
+                    tab: {
+                        ...model.tab,
+                        selectedGroup: just(msg.group.name)
+                    }
+                });
+            }
+            return noCmd(model);
+        }
+        case "close-group":
+            return noCmd({
+                ...model,
+                tab: initialTab("groups")
+            });
+        case "got-settings": {
+            return Tuple.t2n(
+                {
+                    ...model,
+                    settings: just(msg.settings)
+                },
+                displayThemeCmd(msg.settings.theme)
+            );
+        }
+        case "toggle-notifications-enabled": {
+            const settings = model.settings
+                .map(s => ({
+                    ...s,
+                    notificationsEnabled: !s.notificationsEnabled
+                }))
+                .withDefault(defaultSettings);
+            return Tuple.t2n(
+                {
+                    ...model,
+                    settings: just(settings)
+                },
+                taskToCmdNoop(saveSettingsToLocalStorage(settings))
+            )
+        }
+        case "toggle-dark-mode": {
+            if (model.settings.type === "Nothing") {
+                return noCmd(model);
+            }
+            const settings: Settings = model.settings.value;
+            const theme: Theme = settings.theme === "dark" ? "light" : "dark";
+
+            return Tuple.t2n(
+                {
+                    ...model,
+                    settings: just({...settings, theme})
+                },
+                Cmd.batch([
+                    taskToCmdNoop(saveSettingsToLocalStorage(settings)),
+                    displayThemeCmd(theme)
+                ])
+            )
+        }
     }
+}
+
+function displayThemeCmd(theme: Theme): Cmd<Msg> {
+    return taskToCmdNoop(
+        fromLambdaSuccess(() => {
+            displayTheme(theme);
+        })
+    );
+}
+
+function taskToCmdNoop(task: Task<any,any>): Cmd<Msg> {
+    return Task.attempt(
+        task,
+        () => ({ tag: "noop"})
+    )
 }
 
 function openBuild(flags: Flags, url: string): Cmd<Msg> {
@@ -284,6 +578,7 @@ export function subscriptions(flags: Flags): Sub<Msg> {
     let ipc: Sub<Msg> = Sub.none();
     if (flags.tag === "electron") {
         ipc = ipcSub<Msg>(flags.ipc, "server-ready", msgArgs => {
+            debugger;
             return {
                 tag: "server-ready",
                 args: msgArgs
@@ -320,6 +615,7 @@ class WebSocketSub<M> extends Sub<M> {
     }
 
     private readonly listener = (ev: MessageEvent) => {
+        // console.log("wsEvt", ev.data);
         this.dispatch(this.toMsg(ev.data));
     }
 
