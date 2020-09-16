@@ -1,4 +1,5 @@
-import { Task, Decoder, Decode as D, Result, ok } from "react-tea-cup"
+import {Decode as D, Decoder, Task} from "react-tea-cup"
+import {fromLambdaSuccess} from "./TaskSuccessfulFromLambda";
 
 export interface Settings {
     readonly notificationsEnabled: boolean;
@@ -40,21 +41,4 @@ export function saveSettingsToLocalStorage(settings: Settings): Task<never, Sett
         window.localStorage.setItem(localStorageKey, JSON.stringify(settings));
         return settings;
     })
-}
-
-// see https://github.com/vankeisb/react-tea-cup/issues/21
-
-function fromLambdaSuccess<T>(f:() => T): Task<never,T> {
-    return new TaskSuccessfulFromLambda(f);
-}
-
-class TaskSuccessfulFromLambda<T> extends Task<never,T> {
-
-    constructor(private readonly f:() => T) {
-        super();
-    }
-
-    execute(callback: (r: Result<never, T>) => void): void {
-        callback(ok(this.f()))
-    }
 }
