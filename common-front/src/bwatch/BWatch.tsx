@@ -12,6 +12,7 @@ import {ViewSettings} from "./ViewSettings";
 import {defaultSettings, loadSettingsFromLocalStorage, saveSettingsToLocalStorage, Settings} from "./Settings";
 import {displayTheme, Theme} from "./ThemeConfig";
 import {fromLambdaSuccess} from "./TaskSuccessfulFromLambda";
+import {ViewFilter} from "./ViewFilter";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -54,8 +55,8 @@ export function remoteApi(flags: Flags): RemoteApi {
 export function init(flags: Flags): [Model, Cmd<Msg>] {
     const model: Model = {
         listResponse: nothing,
-        tab: { tag: "builds" },
-        settings: nothing
+        tab: { tag: "builds", filter: '' },
+        settings: nothing,
     };
     const loadSettings: Cmd<Msg> = Task.perform(
         loadSettingsFromLocalStorage(),
@@ -182,6 +183,7 @@ export function view(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
             <div className="bwatch">
                 {viewTabs(dispatch, model)}
                 <div className="content">
+                    <ViewFilter dispatch={dispatch} model={model} />
                     {viewTabContent(flags, dispatch, model)}
                 </div>
             </div>
@@ -539,6 +541,19 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
                 ])
             )
         }
+        case "filter-changed": {
+            if (model.tab.tag === "settings") {
+                return noCmd(model)
+            }
+            return noCmd({
+                ...model,
+                tab: {
+                    ...model.tab,
+                    filter: msg.filter
+                }
+            })
+        }
+
     }
 }
 
