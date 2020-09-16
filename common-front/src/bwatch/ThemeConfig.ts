@@ -1,24 +1,11 @@
-import { Task } from "react-tea-cup";
-import {fromLambdaSuccess} from "./TaskSuccessfulFromLambda";
-
 export type Theme = "dark" | "light";
 
-export class ThemeConfig {
-
-    detectTheme(): Theme {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-
-    displayTheme(theme: Theme): Theme {
-        document.body.setAttribute('data-theme', theme);
-        return theme;
-    }
+export function detectTheme(): Theme {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-const themeConfig = new ThemeConfig();
-
-export function displayTheme(theme: Theme): Task<never,Theme> {
-    return fromLambdaSuccess(() => themeConfig.displayTheme(theme))
+export function displayTheme(theme: Theme): void {
+    document.body.setAttribute('data-theme', theme);
 }
 
 

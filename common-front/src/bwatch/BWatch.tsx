@@ -10,6 +10,8 @@ import {linkToBuild} from "./LinkToBuild";
 import {computeGroup} from "./Group";
 import {ViewSettings} from "./ViewSettings";
 import {defaultSettings, loadSettingsFromLocalStorage, saveSettingsToLocalStorage, Settings} from "./Settings";
+import {displayTheme, Theme} from "./ThemeConfig";
+import {fromLambdaSuccess} from "./TaskSuccessfulFromLambda";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -59,7 +61,6 @@ export function init(flags: Flags): [Model, Cmd<Msg>] {
         loadSettingsFromLocalStorage(),
         settings => ({ tag: "got-settings", settings })
     )
-
     switch (flags.tag) {
         case "browser": {
             return Tuple.fromNative(listBuilds(remoteApi(flags), model))
@@ -177,8 +178,8 @@ export function view(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
         <>
             {viewModal(flags, dispatch, model)}
             <div className="bwatch">
+                {viewTabs(dispatch, model)}
                 <div className="content">
-                    {viewTabs(dispatch, model)}
                     <div className="scroll-pane">
                         {viewTabContent(flags, dispatch, model)}
                     </div>
@@ -498,10 +499,13 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
                 tab: initialTab("groups")
             });
         case "got-settings": {
-            return noCmd({
-                ...model,
-                settings: just(msg.settings)
-            });
+            return Tuple.t2n(
+                {
+                    ...model,
+                    settings: just(msg.settings)
+                },
+                displayThemeCmd(msg.settings.theme)
+            );
         }
         case "toggle-notifications-enabled": {
             const settings = model.settings
@@ -518,7 +522,33 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
                 taskToCmdNoop(saveSettingsToLocalStorage(settings))
             )
         }
+        case "toggle-dark-mode": {
+            if (model.settings.type === "Nothing") {
+                return noCmd(model);
+            }
+            const settings: Settings = model.settings.value;
+            const theme: Theme = settings.theme === "dark" ? "light" : "dark";
+
+            return Tuple.t2n(
+                {
+                    ...model,
+                    settings: just({...settings, theme})
+                },
+                Cmd.batch([
+                    taskToCmdNoop(saveSettingsToLocalStorage(settings)),
+                    displayThemeCmd(theme)
+                ])
+            )
+        }
     }
+}
+
+function displayThemeCmd(theme: Theme): Cmd<Msg> {
+    return taskToCmdNoop(
+        fromLambdaSuccess(() => {
+            displayTheme(theme);
+        })
+    );
 }
 
 function taskToCmdNoop(task: Task<any,any>): Cmd<Msg> {

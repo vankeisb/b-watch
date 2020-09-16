@@ -20,6 +20,11 @@ $break-point: 700px;
     display: flex;
     flex-direction: column;
 
+    .nav {
+        padding-top: 1rem;
+        padding-left: 1rem;
+    }
+
     .content {
         flex-grow: 1;
         overflow: hidden;
