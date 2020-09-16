@@ -19,7 +19,8 @@
   "build": {
     "appId": "bwatch",
     "files": [
-      "build/**/*"
+      "build/**/*",
+      "assets/**/*"
     ]
   },
   "keywords": [],
