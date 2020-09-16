@@ -33,7 +33,8 @@ export function toBuildInfo(build: Build): BuildInfo {
                     tag: "travis",
                     branch: config.conf.branch,
                     repository: config.conf.repository,
-                }
+                },
+                groups: config.groups
             }
         }
         case "bamboo": {
@@ -44,7 +45,8 @@ export function toBuildInfo(build: Build): BuildInfo {
                 info: {
                     tag: "bamboo",
                     plan: config.conf.plan,
-                }
+                },
+                groups: config.groups
             }
         }
     }

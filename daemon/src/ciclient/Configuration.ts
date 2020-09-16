@@ -9,24 +9,53 @@ export type BuildConfig
     = BambooBuildConfig
     | TravisBuildConfig
 
+export interface HasGroups {
+    readonly groups: readonly string[];
+}
 
-export interface BambooBuildConfig {
+const HasGroupsDecoder: Decoder<HasGroups> =
+    D.map(
+        groups => ({groups}),
+        D.oneOf([
+            D.field("groups", D.array(D.str)),
+            D.succeed([])
+        ])
+    );
+
+export interface BambooBuildConfig extends HasGroups {
     tag: "bamboo"
     conf: BambooConfig
 }
 
 export const BambooBuildConfigDecoder: Decoder<BambooBuildConfig> =
-    D.map(
-        conf => ({tag: "bamboo", conf}),
+    D.andThen(
+        conf =>
+            D.map(
+                hasTags => ({
+                    tag: "bamboo",
+                    ...hasTags,
+                    conf
+                }),
+                HasGroupsDecoder
+            )
+        ,
         BambooConfigDecoder
     );
 
 export const TravisBuildConfigDecoder: Decoder<TravisBuildConfig> =
-    D.map(
-        conf => ({tag: "travis", conf}),
+    D.andThen(
+        conf =>
+            D.map(
+                hasTags => ({
+                    tag: "travis",
+                    ...hasTags,
+                    conf
+                }),
+                HasGroupsDecoder
+            )
+        ,
         TravisConfigDecoder
     );
-
 
 export const BuildConfigDecoder: Decoder<BuildConfig> =
     D.andThen(
@@ -59,7 +88,7 @@ export const ConfigurationDecoder: Decoder<Configuration> =
         ]),
     );
 
-export interface TravisBuildConfig {
+export interface TravisBuildConfig extends HasGroups{
     tag: "travis"
     conf: TravisConfig
 }
