@@ -32,7 +32,7 @@ $break-point: 700px;
         overflow: auto;
     }
 
-    .builds, .groups {
+    .builds, .groups, .settings {
 
         @media only screen and (min-width: $break-point) {
             padding-top: 1rem;

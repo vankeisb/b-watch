@@ -3,11 +3,13 @@ import * as React from "react";
 import {gotBuilds, gotWsMessage, Msg} from "./Msg";
 import {Api, BuildInfo, BuildInfoDecoder, ListResponse, RemoteApi} from "bwatch-common";
 import {ViewBuildInfo} from "./ViewBuildInfo";
-import { ViewGroups } from "./ViewGroups";
+import {ViewGroups} from "./ViewGroups";
 import {initialTab, Tab, TabType} from "./Tab";
 import {Flags, Ipc} from "./Flags";
 import {linkToBuild} from "./LinkToBuild";
 import {computeGroup} from "./Group";
+import {ViewSettings} from "./ViewSettings";
+import {defaultSettings, loadSettingsFromLocalStorage, saveSettingsToLocalStorage, Settings} from "./Settings";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -32,6 +34,7 @@ export function connectToWs(flags: Flags) {
 export interface Model {
     readonly listResponse: Maybe<Result<string,ListResponse>>;
     readonly tab: Tab;
+    readonly settings: Maybe<Settings>;
 }
 
 const defaultHost = "localhost";
@@ -49,11 +52,19 @@ export function remoteApi(flags: Flags): RemoteApi {
 export function init(flags: Flags): [Model, Cmd<Msg>] {
     const model: Model = {
         listResponse: nothing,
-        tab: { tag: "builds" }
+        tab: { tag: "builds" },
+        settings: nothing
     };
+    const loadSettings: Cmd<Msg> = Task.perform(
+        loadSettingsFromLocalStorage(),
+        settings => ({ tag: "got-settings", settings })
+    )
+
     switch (flags.tag) {
         case "browser": {
-            return listBuilds(remoteApi(flags), model);
+            return Tuple.fromNative(listBuilds(remoteApi(flags), model))
+                .mapSecond(c => Cmd.batch([c, loadSettings]))
+                .toNative();
         }
         case "electron": {
             console.log("app ready");
@@ -62,7 +73,10 @@ export function init(flags: Flags): [Model, Cmd<Msg>] {
             })
             return Tuple.t2n(
                 model,
-                Task.attempt(notifyAppReady, () => ({tag: "noop"}))
+                Cmd.batch([
+                    Task.attempt(notifyAppReady, () => ({tag: "noop"})),
+                    loadSettings
+                ])
             )
         }
     }
@@ -102,6 +116,7 @@ function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
         <ul className="nav nav-tabs">
             {navItem("builds")}
             {navItem("groups")}
+            {navItem("settings")}
         </ul>
     )
 }
@@ -127,6 +142,11 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
                         case "groups": {
                             return (
                                 <ViewGroups dispatch={dispatch} listResponse={listResponse}/>
+                            )
+                        }
+                        case "settings": {
+                            return (
+                                <ViewSettings dispatch={dispatch} settings={model.settings}/>
                             )
                         }
                     }
@@ -453,10 +473,12 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
                 .toNative()
         }
         case "tab-clicked": {
-            return noCmd({
-                ...model,
-                tab: initialTab(msg.tab)
-            });
+            return noCmd(
+                {
+                    ...model,
+                    tab: initialTab(msg.tab)
+                }
+            );
         }
         case "open-group": {
             if (model.tab.tag === "groups") {
@@ -475,7 +497,35 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
                 ...model,
                 tab: initialTab("groups")
             });
+        case "got-settings": {
+            return noCmd({
+                ...model,
+                settings: just(msg.settings)
+            });
+        }
+        case "toggle-notifications-enabled": {
+            const settings = model.settings
+                .map(s => ({
+                    ...s,
+                    notificationsEnabled: !s.notificationsEnabled
+                }))
+                .withDefault(defaultSettings);
+            return Tuple.t2n(
+                {
+                    ...model,
+                    settings: just(settings)
+                },
+                taskToCmdNoop(saveSettingsToLocalStorage(settings))
+            )
+        }
     }
+}
+
+function taskToCmdNoop(task: Task<any,any>): Cmd<Msg> {
+    return Task.attempt(
+        task,
+        () => ({ tag: "noop"})
+    )
 }
 
 function openBuild(flags: Flags, url: string): Cmd<Msg> {

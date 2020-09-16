@@ -18,11 +18,8 @@
     "start": "node dist/index.js"
   },
   "watch": {
-    "src/**/*.ts": [
-      "build:tsc"
-    ],
-    "src/**/*.scss": [
-      "build:scss"
+    "src/**/*.*": [
+      "build:tsc", "build:scss"
     ]
   },
   "devDependencies": {
