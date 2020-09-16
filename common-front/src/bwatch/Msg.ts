@@ -15,6 +15,7 @@ export type Msg
     | { tag: "close-group" }
     | { tag: "got-settings", settings: Settings }
     | { tag: "toggle-notifications-enabled" }
+    | { tag: "toggle-dark-mode" }
     | { tag: "noop" };
 
 

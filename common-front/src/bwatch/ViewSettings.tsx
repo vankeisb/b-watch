@@ -13,7 +13,7 @@ export function ViewSettings(props: ViewSettingsProps) {
         <div className="settings">
             {props.settings
                 .map(settings => {
-                    const { notificationsEnabled } = settings;
+                    const { notificationsEnabled, theme } = settings;
                     return (
                         <form>
                             <div className="form-group form-check">
@@ -25,6 +25,17 @@ export function ViewSettings(props: ViewSettingsProps) {
                                     onChange={() => props.dispatch({ tag: "toggle-notifications-enabled"})}/>
                                 <label className="form-check-label" htmlFor="enableNotifications">
                                     Enable notifications
+                                </label>
+                            </div>
+                            <div className="form-group form-check">
+                                <input
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    id="darkMode"
+                                    checked={theme === "dark"}
+                                    onChange={() => props.dispatch({ tag: "toggle-dark-mode" })}/>
+                                <label className="form-check-label" htmlFor="darkMode">
+                                    Dark mode
                                 </label>
                             </div>
                         </form>

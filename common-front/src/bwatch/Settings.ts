@@ -1,19 +1,32 @@
-import { Task, Decoder, Decode as D, Result, ok } from "react-tea-cup"
+import {Decode as D, Decoder, Task} from "react-tea-cup"
+import {fromLambdaSuccess} from "./TaskSuccessfulFromLambda";
+import {detectTheme, Theme} from "./ThemeConfig";
 
 export interface Settings {
     readonly notificationsEnabled: boolean;
+    readonly theme: Theme;
 }
 
 export const defaultSettings: Settings = {
-    notificationsEnabled: true
+    notificationsEnabled: true,
+    theme: "light"
 }
 
 export const localStorageKey = "bwatch-settings";
 
 const SettingsDecoder: Decoder<Settings> =
-    D.map(
-        notificationsEnabled => ({notificationsEnabled}),
-        D.field("notificationsEnabled", D.bool)
+    D.map2(
+        (notificationsEnabled: boolean, theme: Theme) => ({notificationsEnabled, theme}),
+        D.field("notificationsEnabled", D.bool),
+        D.andThen(
+            s => {
+                if (s === "dark" || s === "light") {
+                    return D.succeed(s as Theme);
+                }
+                return D.fail(`invalid theme ${s}`)
+            },
+            D.field("theme", D.str)
+        )
     );
 
 export function loadSettingsFromLocalStorage(): Task<never, Settings>{
@@ -24,7 +37,13 @@ export function loadSettingsFromLocalStorage(): Task<never, Settings>{
             switch (r.tag) {
                 case "Err": {
                     console.warn("unable to load settings, creating new settings", r.err);
-                    return defaultSettings;
+                    // remove corrupt version
+                    window.localStorage.removeItem(localStorageKey);
+                    const theme: Theme = detectTheme();
+                    return {
+                        ...defaultSettings,
+                        theme: theme
+                    }
                 }
                 case "Ok": {
                     return r.value;
@@ -40,21 +59,4 @@ export function saveSettingsToLocalStorage(settings: Settings): Task<never, Sett
         window.localStorage.setItem(localStorageKey, JSON.stringify(settings));
         return settings;
     })
-}
-
-// see https://github.com/vankeisb/react-tea-cup/issues/21
-
-function fromLambdaSuccess<T>(f:() => T): Task<never,T> {
-    return new TaskSuccessfulFromLambda(f);
-}
-
-class TaskSuccessfulFromLambda<T> extends Task<never,T> {
-
-    constructor(private readonly f:() => T) {
-        super();
-    }
-
-    execute(callback: (r: Result<never, T>) => void): void {
-        callback(ok(this.f()))
-    }
 }

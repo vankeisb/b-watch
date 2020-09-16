@@ -4,6 +4,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
+    "bootstrap-darkmode": "^0.7.0",
     "bwatch-common": "0.0.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
@@ -19,7 +20,8 @@
   },
   "watch": {
     "src/**/*.*": [
-      "build:tsc", "build:scss"
+      "build:tsc",
+      "build:scss"
     ]
   },
   "devDependencies": {

@@ -1,4 +1,5 @@
 @import "~bootstrap/dist/css/bootstrap.min.css";
+@import "~bootstrap-darkmode/dist/darktheme.css";
 
 $border-color: #f1f1f1;
 $break-point: 700px;
@@ -18,6 +19,11 @@ $break-point: 700px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+
+    .nav {
+        padding-top: 1rem;
+        padding-left: 1rem;
+    }
 
     .content {
         flex-grow: 1;
