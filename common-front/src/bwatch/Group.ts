@@ -1,4 +1,5 @@
 import {BuildInfo} from "bwatch-common";
+import {Maybe} from "react-tea-cup";
 
 export class Group {
 
@@ -53,4 +54,11 @@ export function computeGroups(builds: readonly BuildInfo[]): Group[] {
         })
     );
     return Object.keys(res).map(name => new Group(name, res[name]));
+}
+
+export function computeGroup(name: string, builds: readonly BuildInfo[]): Group {
+    return new Group(
+        name,
+        builds.filter(b => b.groups.find(g => g === name) !== undefined)
+    )
 }

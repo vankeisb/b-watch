@@ -3,7 +3,7 @@ import {Maybe, nothing} from "react-tea-cup";
 
 export type Tab
     = { tag: "builds" }
-    | { tag: "groups", selectedGroup: Maybe<Group> };
+    | { tag: "groups", selectedGroup: Maybe<string> };
 
 
 export type TabType = Tab["tag"]
