@@ -13,6 +13,7 @@ import {defaultSettings, loadSettingsFromLocalStorage, saveSettingsToLocalStorag
 import {displayTheme, Theme} from "./ThemeConfig";
 import {fromLambdaSuccess} from "./TaskSuccessfulFromLambda";
 import {ViewFilter} from "./ViewFilter";
+import {docOn} from "./DocumentSubs";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -55,7 +56,7 @@ export function remoteApi(flags: Flags): RemoteApi {
 export function init(flags: Flags): [Model, Cmd<Msg>] {
     const model: Model = {
         listResponse: nothing,
-        tab: { tag: "builds", filter: '' },
+        tab: { tag: "builds", filter: nothing },
         settings: nothing,
     };
     const loadSettings: Cmd<Msg> = Task.perform(
@@ -549,11 +550,43 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
                 ...model,
                 tab: {
                     ...model.tab,
-                    filter: msg.filter
+                    filter: just(msg.filter)
                 }
             })
         }
-
+        case "open-filter": {
+            const { tab } = model;
+            if (tab.tag === "builds" || tab.tag === "groups") {
+                return Tuple.t2n(
+                    {
+                        ...model,
+                        tab: {
+                            ...tab,
+                            filter: just("")
+                        }
+                    },
+                    taskToCmdNoop(
+                        Task.fromLambda(() => {
+                            document.getElementById("filter")?.focus()
+                        })
+                    )
+                )
+            }
+            return noCmd(model)
+        }
+        case "close-filter": {
+            const { tab } = model;
+            if (tab.tag === "builds" || tab.tag === "groups") {
+                return noCmd({
+                    ...model,
+                    tab: {
+                        ...tab,
+                        filter: nothing
+                    }
+                })
+            }
+            return noCmd(model)
+        }
     }
 }
 
@@ -604,7 +637,22 @@ export function subscriptions(flags: Flags): Sub<Msg> {
     if (ws) {
         wsSub = onWebSocketMessage(ws, gotWsMessage);
     }
-    return Sub.batch([wsSub, ipc]);
+    const onDocKey: Sub<Msg> = docOn("keydown", ev => {
+        if (ev.code === "KeyF" && ev.ctrlKey) {
+            ev.preventDefault();
+            return {
+                tag: "open-filter"
+            } as Msg
+        }
+        if (ev.code === "Escape") {
+            return {
+                tag: "close-filter"
+            }
+        }
+
+        return { tag: "noop" }
+    })
+    return Sub.batch([wsSub, ipc, onDocKey]);
 }
 
 // WS helper
@@ -709,3 +757,4 @@ class IpcSub<M> extends Sub<M> {
         this.dispatch(this.toMsg(args));
     }
 }
+
