@@ -2,7 +2,8 @@ import {Msg} from "./Msg";
 import {Dispatcher, Maybe, nothing} from "react-tea-cup";
 import {BuildInfo, BuildStatus, getBuildUrl} from "bwatch-common";
 import * as React from "react";
-import {Flags} from "./BWatch";
+import {linkToBuild} from "./LinkToBuild";
+import {Flags} from "./Flags";
 
 export interface ViewBuildInfoProps {
     dispatch: Dispatcher<Msg>
@@ -36,23 +37,6 @@ export function ViewStatus(props: {status: BuildStatus}) {
 }
 
 export function ViewBuildInfo(props: ViewBuildInfoProps) {
-
-    function linkToBuild(url: string) {
-        switch (props.flags.tag) {
-            case "browser": {
-                return <a href={url} className="card-link">View result</a>;
-            }
-            case "electron":
-                return (
-                    <a href="#" onClick={e => {
-                        e.preventDefault();
-                        props.dispatch({ tag: "open-build", url });
-                    }}>
-                        View result
-                    </a>
-                );
-        }
-    }
 
     let title;
     let subtitle;
@@ -92,9 +76,13 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
                 <div className="spacer"/>
                 <div className="status">
                     <ViewStatus status={props.buildInfo.status}/>
-                    {url
-                        .map(u => linkToBuild(u))
-                        .toNative()
+                    {
+                        linkToBuild({
+                            dispatch: props.dispatch,
+                            flags: props.flags,
+                            status: props.buildInfo.status,
+                            text: "View result"
+                        }).toNative()
                     }
                 </div>
             </div>

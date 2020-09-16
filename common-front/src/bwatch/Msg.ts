@@ -11,6 +11,7 @@ export type Msg
     | { tag: "server-ready" }
     | { tag: "tab-clicked", tab: TabType }
     | { tag: "open-group", group: Group }
+    | { tag: "close-group" }
     | { tag: "noop" };
 
 

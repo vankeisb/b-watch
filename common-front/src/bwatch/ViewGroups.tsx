@@ -24,19 +24,21 @@ export function ViewGroups(props: ViewGroupsProps) {
 
     const { listResponse } = props;
     return (
-        <div className="groups">
-            {computeGroups(listResponse.builds).map(group =>
-                <div className="card" key={group.name}>
-                    <div className="card-body">
-                        <h5 className="card-title">{group.name}</h5>
-                        <div className="status">
-                            {viewCountForStatuses(group)}
-                            {linkToGroup(group)}
+        <>
+            <div className="groups">
+                {computeGroups(listResponse.builds).map(group =>
+                    <div className="card" key={group.name}>
+                        <div className="card-body">
+                            <h5 className="card-title">{group.name}</h5>
+                            <div className="status">
+                                {viewCountForStatuses(group)}
+                                {linkToGroup(group)}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )}
+            </div>
+        </>
     )
 }
 
