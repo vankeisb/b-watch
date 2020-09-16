@@ -177,7 +177,7 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
                             );
                         case "groups": {
                             return (
-                                <ViewGroups dispatch={dispatch} listResponse={listResponse}/>
+                                <ViewGroups dispatch={dispatch} listResponse={listResponse} filter={model.tab.filter}/>
                             )
                         }
                         case "settings": {

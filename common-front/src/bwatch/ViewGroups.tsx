@@ -1,15 +1,17 @@
 import { ListResponse } from "bwatch-common";
 import * as React from "react";
 import {Msg} from "./Msg";
-import { Dispatcher } from "react-tea-cup";
+import { Dispatcher, Maybe } from "react-tea-cup";
 import {computeGroups, Group} from "./Group";
 
 export interface ViewGroupsProps {
     dispatch: Dispatcher<Msg>;
     listResponse: ListResponse;
+    filter: Maybe<string>;
 }
 
 export function ViewGroups(props: ViewGroupsProps) {
+    const { listResponse, filter, dispatch } = props;
 
     function linkToGroup(group: Group) {
         return (
@@ -22,21 +24,35 @@ export function ViewGroups(props: ViewGroupsProps) {
         );
     }
 
-    const { listResponse } = props;
+
+    function groupMatches(group: Group): boolean {
+        return filter
+            .map(f => {
+                function strMatches(str: string): boolean {
+                    return str.toLowerCase().indexOf(f.toLowerCase()) !== -1;
+                }
+
+                return strMatches(group.name)
+            })
+            .withDefault(true)
+    }
+
     return (
         <div className="scroll-pane">
             <div className="groups">
-                {computeGroups(listResponse.builds).map(group =>
-                    <div className="card" key={group.name}>
-                        <div className="card-body">
-                            <h5 className="card-title">{group.name}</h5>
-                            <div className="status">
-                                {viewCountForStatuses(group)}
-                                {linkToGroup(group)}
+                {computeGroups(listResponse.builds)
+                    .filter(groupMatches)
+                    .map(group =>
+                        <div className="card" key={group.name}>
+                            <div className="card-body">
+                                <h5 className="card-title">{group.name}</h5>
+                                <div className="status">
+                                    {viewCountForStatuses(group)}
+                                    {linkToGroup(group)}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
             </div>
         </div>
     )

@@ -24,6 +24,7 @@ export function ViewFilter(props: ViewFilterProps) {
                            aria-label="Filter"
                            aria-describedby="basic-addon1"
                            value={filter.withDefault('')}
+                           autoComplete="off"
                            onChange={e =>
                                dispatch({ tag: "filter-changed", filter: e.target.value })
                            }
