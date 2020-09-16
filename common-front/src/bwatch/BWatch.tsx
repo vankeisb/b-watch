@@ -574,7 +574,11 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
             )
         }
         case "filter-changed": {
-            if (model.tab.tag === "settings") {
+            const { tab } = model;
+            if (tab.tag === "groups" && tab.selectedGroup.isJust()) {
+                return noCmd(model);
+            }
+            if (tab.tag === "settings") {
                 return noCmd(model)
             }
             return noCmd({
@@ -582,11 +586,14 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
                 tab: {
                     ...model.tab,
                     filter: just(msg.filter)
-                }
+                } as Tab
             })
         }
         case "open-filter": {
             const { tab } = model;
+            if (tab.tag === "groups" && tab.selectedGroup.isJust()) {
+                return noCmd(model);
+            }
             if (tab.tag === "builds" || tab.tag === "groups") {
                 return Tuple.t2n(
                     {
@@ -607,6 +614,9 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
         }
         case "close-filter": {
             const { tab } = model;
+            if (tab.tag === "groups" && tab.selectedGroup.isJust()) {
+                return noCmd(model);
+            }
             if (tab.tag === "builds" || tab.tag === "groups") {
                 return noCmd({
                     ...model,
