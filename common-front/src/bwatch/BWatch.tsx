@@ -331,14 +331,14 @@ function updateBuild(flags: Flags, model: Model, build: BuildInfo): [Model, Cmd<
                     const { builds } = listResp;
                     const index = builds.findIndex(b => b.uuid === build.uuid);
                     let newBuilds = [...builds];
-                    let needsNotif;
+                    let needsNotif = model.settings.map(s => s.notificationsEnabled).withDefault(true)
                     if (index === -1) {
-                        needsNotif = true;
+                        needsNotif = needsNotif && true;
                         newBuilds = builds.concat([build]);
                     }  else {
                         const prevBuild = builds[index];
                         newBuilds[index] = build;
-                        needsNotif = prevBuild.status.tag !== "none" && prevBuild.status.tag !== build.status.tag;
+                        needsNotif = needsNotif && prevBuild.status.tag !== "none" && prevBuild.status.tag !== build.status.tag;
                     }
                     const newResp: ListResponse = {
                         ...listResp,
@@ -357,7 +357,7 @@ function updateBuild(flags: Flags, model: Model, build: BuildInfo): [Model, Cmd<
                     }
 
                     if (needsNotif) {
-                        notifCmd = Task.perform(
+                        notifCmd = taskToCmdNoop(
                             notification(notifTitle(build), {
                                 body: notifBody(build),
                             }, e => {
@@ -372,8 +372,7 @@ function updateBuild(flags: Flags, model: Model, build: BuildInfo): [Model, Cmd<
                                         break;
                                     }
                                 }
-                            }),
-                            () => ({tag: "noop"})
+                            })
                         );
                     }
 
