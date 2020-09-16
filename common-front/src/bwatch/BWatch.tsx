@@ -124,7 +124,36 @@ function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
     )
 }
 
+
 function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
+    const filter = model.tab.tag === "builds" || model.tab.tag === "groups"
+        ? model.tab.filter
+        : nothing;
+
+
+
+    function buildMatches(buildInfo: BuildInfo): boolean {
+        return filter
+            .map(f => {
+
+                function strMatches(str: string): boolean {
+                    return str.toLowerCase().indexOf(f.toLowerCase()) !== -1;
+                }
+
+                const { info } = buildInfo;
+                switch (info.tag) {
+                    case "travis": {
+                        return strMatches(info.repository)
+                            || strMatches(info.branch);
+                    }
+                    case "bamboo": {
+                        return strMatches(info.plan);
+                    }
+                }
+            })
+            .withDefault(true)
+    }
+
     return model.listResponse
         .map(r =>
             r.match(
@@ -134,7 +163,9 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
                             return (
                                 <div className="scroll-pane">
                                     <div className="builds">
-                                        {listResponse.builds.map(build => (
+                                        {listResponse.builds
+                                            .filter(buildMatches)
+                                            .map(build => (
                                             <ViewBuildInfo
                                                 key={build.uuid}
                                                 dispatch={dispatch}
