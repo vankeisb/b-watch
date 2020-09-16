@@ -32,16 +32,24 @@ $break-point: 700px;
         overflow: auto;
     }
 
+    @mixin padded {
+        padding-top: 1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        flex-direction: row;
+        flex-wrap: wrap;
+        display: inline-flex;
+        gap: 1rem;
+    }
+
+    .settings {
+        @include padded;
+    }
+
     .builds, .groups {
 
         @media only screen and (min-width: $break-point) {
-            padding-top: 1rem;
-            padding-left: 1rem;
-            padding-right: 1rem;
-            flex-direction: row;
-            flex-wrap: wrap;
-            display: inline-flex;
-            gap: 1rem;
+            @include padded;
         }
 
     }
