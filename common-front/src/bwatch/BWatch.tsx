@@ -130,14 +130,16 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
                     switch (model.tab.tag) {
                         case "builds":
                             return (
-                                <div className="builds">
-                                    {listResponse.builds.map(build => (
-                                        <ViewBuildInfo
-                                            key={build.uuid}
-                                            dispatch={dispatch}
-                                            buildInfo={build}
-                                            flags={flags}/>
-                                    ))}
+                                <div className="scroll-pane">
+                                    <div className="builds">
+                                        {listResponse.builds.map(build => (
+                                            <ViewBuildInfo
+                                                key={build.uuid}
+                                                dispatch={dispatch}
+                                                buildInfo={build}
+                                                flags={flags}/>
+                                        ))}
+                                    </div>
                                 </div>
                             );
                         case "groups": {
@@ -180,9 +182,7 @@ export function view(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
             <div className="bwatch">
                 {viewTabs(dispatch, model)}
                 <div className="content">
-                    <div className="scroll-pane">
-                        {viewTabContent(flags, dispatch, model)}
-                    </div>
+                    {viewTabContent(flags, dispatch, model)}
                 </div>
             </div>
             { model.tab.tag === "groups" && model.tab.selectedGroup.isJust()

@@ -24,7 +24,7 @@ export function ViewGroups(props: ViewGroupsProps) {
 
     const { listResponse } = props;
     return (
-        <>
+        <div className="scroll-pane">
             <div className="groups">
                 {computeGroups(listResponse.builds).map(group =>
                     <div className="card" key={group.name}>
@@ -38,7 +38,7 @@ export function ViewGroups(props: ViewGroupsProps) {
                     </div>
                 )}
             </div>
-        </>
+        </div>
     )
 }
 
