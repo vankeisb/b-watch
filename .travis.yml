@@ -3,15 +3,23 @@ node_js:
   - 'lts/erbium'
 
 install:
+  - sudo apt-get install --no-install-recommends -y libopenjp2-tools
   - yarn install
 
 script:
-  - ./build.sh && cd electron-app && yarn dist
+  - ./build.sh
 
 deploy:
-  provider: script
-  script:
-    - cd electron-app && yarn deploy
-  skip_cleanup: true
-  on:
-    tags: true
+  - provider: script
+    script:
+      - cd electron-app && yarn deploy
+    skip_cleanup: true
+    on:
+      tags: true
+  - provider: script
+    script:
+      - cd electron-app && yarn dist
+    skip_cleanup: true
+    on:
+      tags: false
+      all_ranches: true
