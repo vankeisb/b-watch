@@ -2,16 +2,20 @@ language: node_js
 node_js:
   - 'lts/erbium'
 
-install:
-  - yarn install
-
 script:
   - ./build.sh
 
 deploy:
-  provider: script
-  script:
-    - cd electron-app && yarn deploy
-  skip_cleanup: true
-  on:
-    tags: true
+  - provider: script
+    script:
+      - cd electron-app && yarn deploy --linux
+    skip_cleanup: true
+    on:
+      tags: true
+  - provider: script
+    script:
+      - cd electron-app && yarn dist
+    skip_cleanup: true
+    on:
+      tags: false
+      all_branches: true
