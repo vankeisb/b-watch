@@ -28,8 +28,8 @@
   "license": "MIT",
   "devDependencies": {
     "boostrap": "^2.0.0",
-    "bwatch-common-front": "0.0.1",
-    "bwatch-daemon": "0.0.1",
+    "bwatch-common-front": "^0.0.1",
+    "bwatch-daemon": "^0.0.1",
     "cross-env": "^7.0.2",
     "css-loader": "^4.3.0",
     "electron": "10.1.1",

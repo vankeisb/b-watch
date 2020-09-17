@@ -12,7 +12,7 @@
     "@types/superagent-proxy": "^2.0.0",
     "@types/uuid": "^8.3.0",
     "@types/ws": "^7.2.6",
-    "bwatch-common": "0.0.1",
+    "bwatch-common": "^0.0.1",
     "chalk": "^4.1.0",
     "commander": "^6.1.0",
     "express": "^4.17.1",
