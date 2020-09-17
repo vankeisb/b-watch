@@ -4,9 +4,12 @@ import {DevTools, Program, withReduxDevTools} from "react-tea-cup";
 import {Flags, init, Model, Msg, subscriptions, update, view} from "bwatch-common-front";
 import {connectToWs} from "bwatch-common-front/dist/bwatch/BWatch";
 
+const version: string = require("../package.json").version;
+
 const flags: Flags = {
   tag: "browser",
   daemonPort: 4000,
+  version
 };
 
 connectToWs(flags);
@@ -17,7 +20,7 @@ export const App = () => {
       init={() => init(flags)}
       view={(dispatch, model) => view(flags, dispatch, model)}
       update={(msg, model) => update(flags, msg, model)}
-      subscriptions={() => subscriptions(flags)}
+      subscriptions={model => subscriptions(flags, model)}
       devTools={withReduxDevTools(DevTools.init<Model, Msg>(window))}
     />
   );

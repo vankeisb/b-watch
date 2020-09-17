@@ -12,6 +12,9 @@ import {ViewSettings} from "./ViewSettings";
 import {defaultSettings, loadSettingsFromLocalStorage, saveSettingsToLocalStorage, Settings} from "./Settings";
 import {displayTheme, Theme} from "./ThemeConfig";
 import {fromLambdaSuccess} from "./TaskSuccessfulFromLambda";
+import {ViewFilter} from "./ViewFilter";
+import {docOn} from "./DocumentSubs";
+import {initialModel, Model} from "./Model";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -33,12 +36,6 @@ export function connectToWs(flags: Flags) {
     })
 }
 
-export interface Model {
-    readonly listResponse: Maybe<Result<string,ListResponse>>;
-    readonly tab: Tab;
-    readonly settings: Maybe<Settings>;
-}
-
 const defaultHost = "localhost";
 
 export function getHost(flags: Flags): string {
@@ -52,11 +49,7 @@ export function remoteApi(flags: Flags): RemoteApi {
 }
 
 export function init(flags: Flags): [Model, Cmd<Msg>] {
-    const model: Model = {
-        listResponse: nothing,
-        tab: { tag: "builds" },
-        settings: nothing
-    };
+    const model: Model = initialModel;
     const loadSettings: Cmd<Msg> = Task.perform(
         loadSettingsFromLocalStorage(),
         settings => ({ tag: "got-settings", settings })
@@ -93,7 +86,7 @@ function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
         );
     }
 
-    function navItem(tab: TabType) {
+    function navItem(tab: TabType, pill?: boolean) {
         return (
             <li className="nav-item" key={tab}>
                 <a className={navLinkClass(tab)}
@@ -108,6 +101,14 @@ function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
                     }}
                 >
                     {tab}
+                    {pill
+                        ? (
+                            <sup>
+                                <span className="badge badge-info">!</span>
+                            </sup>
+                        )
+                        : <></>
+                    }
                 </a>
             </li>
         )
@@ -117,12 +118,41 @@ function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
         <ul className="nav nav-tabs">
             {navItem("builds")}
             {navItem("groups")}
-            {navItem("settings")}
+            {navItem("settings", model.updateStatus.isJust())}
         </ul>
     )
 }
 
+
 function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
+    const filter = model.tab.tag === "builds" || model.tab.tag === "groups"
+        ? model.tab.filter
+        : nothing;
+
+
+
+    function buildMatches(buildInfo: BuildInfo): boolean {
+        return filter
+            .map(f => {
+
+                function strMatches(str: string): boolean {
+                    return str.toLowerCase().indexOf(f.toLowerCase()) !== -1;
+                }
+
+                const { info } = buildInfo;
+                switch (info.tag) {
+                    case "travis": {
+                        return strMatches(info.repository)
+                            || strMatches(info.branch);
+                    }
+                    case "bamboo": {
+                        return strMatches(info.plan);
+                    }
+                }
+            })
+            .withDefault(true)
+    }
+
     return model.listResponse
         .map(r =>
             r.match(
@@ -130,24 +160,32 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
                     switch (model.tab.tag) {
                         case "builds":
                             return (
-                                <div className="builds">
-                                    {listResponse.builds.map(build => (
-                                        <ViewBuildInfo
-                                            key={build.uuid}
-                                            dispatch={dispatch}
-                                            buildInfo={build}
-                                            flags={flags}/>
-                                    ))}
+                                <div className="scroll-pane">
+                                    <div className="builds">
+                                        {listResponse.builds
+                                            .filter(buildMatches)
+                                            .map(build => (
+                                            <ViewBuildInfo
+                                                key={build.uuid}
+                                                dispatch={dispatch}
+                                                buildInfo={build}
+                                                flags={flags}/>
+                                        ))}
+                                    </div>
                                 </div>
                             );
                         case "groups": {
                             return (
-                                <ViewGroups dispatch={dispatch} listResponse={listResponse}/>
+                                <ViewGroups dispatch={dispatch} listResponse={listResponse} filter={model.tab.filter}/>
                             )
                         }
                         case "settings": {
                             return (
-                                <ViewSettings dispatch={dispatch} settings={model.settings}/>
+                                <ViewSettings dispatch={dispatch}
+                                              settings={model.settings}
+                                              updateStatus={model.updateStatus}
+                                              version={flags.version}
+                                />
                             )
                         }
                     }
@@ -180,9 +218,8 @@ export function view(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
             <div className="bwatch">
                 {viewTabs(dispatch, model)}
                 <div className="content">
-                    <div className="scroll-pane">
-                        {viewTabContent(flags, dispatch, model)}
-                    </div>
+                    <ViewFilter dispatch={dispatch} model={model} />
+                    {viewTabContent(flags, dispatch, model)}
                 </div>
             </div>
             { model.tab.tag === "groups" && model.tab.selectedGroup.isJust()
@@ -539,6 +576,97 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
                 ])
             )
         }
+        case "filter-changed": {
+            const { tab } = model;
+            if (tab.tag === "groups" && tab.selectedGroup.isJust()) {
+                return noCmd(model);
+            }
+            if (tab.tag === "settings") {
+                return noCmd(model)
+            }
+            return noCmd({
+                ...model,
+                tab: {
+                    ...model.tab,
+                    filter: just(msg.filter)
+                } as Tab
+            })
+        }
+        case "open-filter": {
+            const { tab } = model;
+            if (tab.tag === "groups" && tab.selectedGroup.isJust()) {
+                return noCmd(model);
+            }
+            if (tab.tag === "builds" || tab.tag === "groups") {
+                return Tuple.t2n(
+                    {
+                        ...model,
+                        tab: {
+                            ...tab,
+                            filter: just("")
+                        }
+                    },
+                    taskToCmdNoop(
+                        Task.fromLambda(() => {
+                            document.getElementById("filter")?.focus()
+                        })
+                    )
+                )
+            }
+            return noCmd(model)
+        }
+        case "close-filter": {
+            const { tab } = model;
+            if (tab.tag === "groups" && tab.selectedGroup.isJust()) {
+                return noCmd(model);
+            }
+            if (tab.tag === "builds" || tab.tag === "groups") {
+                return noCmd({
+                    ...model,
+                    tab: {
+                        ...tab,
+                        filter: nothing
+                    }
+                })
+            }
+            return noCmd(model)
+        }
+        case "update-started":
+            return noCmd({
+                ...model,
+                updateStatus: just({
+                    tag: "started",
+                    newVersion: msg.newVersion
+                })
+            })
+        case "update-downloaded": {
+            // TODO state inconsistency : what to do if downloaded update but not in the correct state ?
+            return model.updateStatus
+                .map(updateStatus => {
+                    if (updateStatus.tag === "started") {
+                        return noCmd({
+                            ...model,
+                            updateStatus: just({
+                                tag: "downloaded",
+                                newVersion: updateStatus.newVersion
+                            })
+                        })
+                    }
+                    return noCmd(model)
+                })
+                .withDefaultSupply(() => noCmd(model))
+        }
+        case "update-install": {
+            if (flags.tag === "browser") {
+                return noCmd(model);
+            }
+            return Tuple.t2n(
+                model,
+                taskToCmdNoop(
+                    Task.fromLambda(() => flags.ipc.send("update-install"))
+                )
+            )
+        }
     }
 }
 
@@ -574,22 +702,53 @@ function openBuild(flags: Flags, url: string): Cmd<Msg> {
     }
 }
 
-export function subscriptions(flags: Flags): Sub<Msg> {
+export function subscriptions(flags: Flags, model: Model): Sub<Msg> {
     let ipc: Sub<Msg> = Sub.none();
     if (flags.tag === "electron") {
-        ipc = ipcSub<Msg>(flags.ipc, "server-ready", msgArgs => {
-            debugger;
-            return {
-                tag: "server-ready",
-                args: msgArgs
-            }
-        });
+        ipc = Sub.batch([
+            ipcSub<Msg>(flags.ipc, "server-ready", msgArgs => {
+                return {
+                    tag: "server-ready",
+                    args: msgArgs
+                }
+            }),
+            ipcSub<Msg>(flags.ipc, "update-available", msgArgs => {
+                return {
+                    tag: "update-started", newVersion: msgArgs
+                }
+            }),
+            ipcSub<Msg>(flags.ipc, "update-downloaded", () => {
+                if (model.updateStatus.map(s => s.tag === "started").withDefault(false)) {
+                    return {
+                        tag: "update-downloaded"
+                    }
+                }
+                // TODO better error management
+                console.warn("got update-downloaded from ipc, but not started : " + model.updateStatus)
+                return { tag: "noop" }
+            })
+        ]);
     }
     let wsSub: Sub<Msg> = Sub.none();
     if (ws) {
         wsSub = onWebSocketMessage(ws, gotWsMessage);
     }
-    return Sub.batch([wsSub, ipc]);
+    const onDocKey: Sub<Msg> = docOn("keydown", ev => {
+        if (ev.code === "KeyF" && ev.ctrlKey) {
+            ev.preventDefault();
+            return {
+                tag: "open-filter"
+            } as Msg
+        }
+        if (ev.code === "Escape") {
+            return {
+                tag: "close-filter"
+            }
+        }
+
+        return { tag: "noop" }
+    })
+    return Sub.batch([wsSub, ipc, onDocKey]);
 }
 
 // WS helper
@@ -694,3 +853,4 @@ class IpcSub<M> extends Sub<M> {
         this.dispatch(this.toMsg(args));
     }
 }
+

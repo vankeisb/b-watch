@@ -16,6 +16,12 @@ export type Msg
     | { tag: "got-settings", settings: Settings }
     | { tag: "toggle-notifications-enabled" }
     | { tag: "toggle-dark-mode" }
+    | { tag: "filter-changed", filter: string }
+    | { tag: "open-filter" }
+    | { tag: "close-filter" }
+    | { tag: "update-started", newVersion: string }
+    | { tag: "update-downloaded" }
+    | { tag: "update-install" }
     | { tag: "noop" };
 
 

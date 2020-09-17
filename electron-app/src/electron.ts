@@ -3,32 +3,43 @@ import {Args, createServerFromArgs, defaultFile, defaultPort} from "bwatch-daemo
 import chalk from "chalk";
 import * as path from "path";
 import {Command} from "commander";
+import { autoUpdater} from "electron-updater";
+import {makeLogger} from "ts-loader/dist/logger";
 
 export interface ElectronArgs extends Args {
     remoteHost?: string;
+    version: string;
 }
 
+let argv = process.argv;
+
+if (app.isPackaged) {
+    argv = ["dummy", ...process.argv];
+}
 
 export function parseElectronArgs(): ElectronArgs {
     const program = new Command();
+    const version = require("../package.json").version;
     program
-        .name("bwatch")
+        .name(app.getName())
         .description("the b-watch app")
-        .version("0.0.1")
+        .version(version)
         .option("-b, --builds <path>", `Path to the builds JSON file (defaults to ~/${defaultFile})`)
         .option("-p, --port <port>", `Web server port (defaults to ${defaultPort})`)
         .option("-r, --remote <host>", "Do not start daemon, instead use a remote one")
-    program.parse(process.argv);
-
+    program.parse(argv);
     return {
         buildsPath: program.builds || defaultFile,
         port: program.port || defaultPort,
-        remoteHost: program.remote
+        remoteHost: program.remote,
+        version
     }
 }
 
 
 const args: ElectronArgs = parseElectronArgs();
+
+console.log("parsed args", args);
 
 ipcMain.on("open-build", (event, args) => {
     const url = args[0];
@@ -54,7 +65,30 @@ function createWindow() {
         icon,
     });
 
+    win.on('minimize', event => {
+        event.preventDefault();
+        win.hide();
+    });
+
+    win.on("close", () => {
+        console.log("App closed");
+    });
+
     ipcMain.once("app-ready", () => {
+
+        console.log("checking for updates...");
+        autoUpdater.checkForUpdatesAndNotify()
+            .then(r => {
+                if (r) {
+                    console.warn("update available", app.getVersion(), "=>", r.updateInfo.version);
+                    win.webContents.send('update-available', r.updateInfo.version);
+                } else {
+                    console.warn("update check returned null")
+                }
+            })
+            .catch(e =>
+                console.warn("error while trying to update", e)
+            );
 
         if (args.remoteHost) {
             console.log("remote host provided", chalk.green(args.remoteHost), chalk.yellow("will not start local daemon"));
@@ -84,12 +118,16 @@ function createWindow() {
         win.webContents.send("get-args", args);
     });
 
+    ipcMain.on("update-install", () => {
+        autoUpdater.quitAndInstall();
+    })
+
     const dev = process.env.BW_ENV === "dev";
 
     win.removeMenu();
-    if (dev) {
+    // if (dev) {
         win.webContents.openDevTools();
-    }
+    // }
 
     // and load the index.html of the app.
     // TODO file not at the same location when app is packaged
@@ -97,15 +135,6 @@ function createWindow() {
         ? "index.html"
         : "build/index.html";
     win.loadFile(filePath);
-
-    win.on('minimize', event => {
-        event.preventDefault();
-        win.hide();
-    });
-
-    win.on("close", () => {
-        console.log("App closed");
-    });
 
     app.dock && app.dock.hide();
     const tray = new Tray(icon)
@@ -126,6 +155,10 @@ function createWindow() {
     )
     tray.setToolTip('build-watcher')
     tray.setContextMenu(contextMenu)
+
+    autoUpdater.on('update-downloaded', () => {
+        win.webContents.send('update-downloaded');
+    });
 
 }
 
