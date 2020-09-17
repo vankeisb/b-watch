@@ -29,7 +29,8 @@ ipcRenderer.on("get-args", (ev, args) => {
             }
         },
         daemonPort: a.port,
-        remoteHost: a.remoteHost
+        remoteHost: a.remoteHost,
+        version: a.version
     };
 
     ReactDOM.render(
@@ -37,7 +38,7 @@ ipcRenderer.on("get-args", (ev, args) => {
             init={() => init(flags)}
             view={(dispatch, model) => view(flags, dispatch, model)}
             update={(msg, model) => update(flags, msg, model)}
-            subscriptions={() => subscriptions(flags)}
+            subscriptions={model => subscriptions(flags, model)}
             devTools={withReduxDevTools(DevTools.init<Model, Msg>(window))}
         />,
         document.getElementById('root')
