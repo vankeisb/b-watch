@@ -22,7 +22,13 @@
     "files": [
       "build/**/*",
       "assets/**/*"
-    ]
+    ],
+    "snap": {
+      "publish": {
+        "provider": "generic",
+        "url": "https://anydummyurl.com"
+      }
+    }
   },
   "keywords": [],
   "license": "MIT",
