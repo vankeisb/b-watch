@@ -5,19 +5,32 @@ language: node_js
 node_js:
   - 'lts/erbium'
 
-matrix:
-  include:
-    - os: osx
-      osx_image: xcode10.1
+#matrix:
+#  include:
+#    - os: osx
+#      osx_image: xcode10.1
+#
+#    - os: linux
+#      dist: xenial
+#      services:
+#        - xvfb
+#      addons:
+#        apt:
+#          packages:
+#            - libxtst-dev
 
-    - os: linux
-      dist: xenial
-      services:
-        - xvfb
-      addons:
-        apt:
-          packages:
-            - libxtst-dev
+install:
+#  - sudo apt-get update
+#  - sudo apt-get install --no-install-recommends -y libopenjp2-tools
+#  - sudo apt-get install wine32 wine64
+  - uname -a
+  - sudo apt-get update
+  - sudo dpkg --add-architecture i386
+  - wget -O- -q https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_16.04/Release.key | sudo apt-key add -
+  - echo "deb http://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_16.04 ./" | sudo tee /etc/apt/sources.list.d/wine-obs.list
+  - sudo apt-get update
+  - sudo apt install --install-recommends winehq-stable
+  - wine --version
 
 script:
   - ./build.sh
