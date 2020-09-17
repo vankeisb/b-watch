@@ -14,7 +14,7 @@ export interface ElectronArgs extends Args {
 let argv = process.argv;
 
 if (app.isPackaged) {
-    argv = ["dummy", ...process.argv];
+    argv = ["dummy_arg", ...process.argv];
 }
 
 export function parseElectronArgs(): ElectronArgs {
