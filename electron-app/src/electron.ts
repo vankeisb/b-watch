@@ -4,7 +4,7 @@ import chalk from "chalk";
 import * as path from "path";
 import {Command} from "commander";
 import { autoUpdater} from "electron-updater";
-import {makeLogger} from "ts-loader/dist/logger";
+import {version} from "webpack";
 
 export interface ElectronArgs extends Args {
     remoteHost?: string;
@@ -80,8 +80,10 @@ function createWindow() {
         autoUpdater.checkForUpdatesAndNotify()
             .then(r => {
                 if (r) {
-                    console.warn("update available", app.getVersion(), "=>", r.updateInfo.version);
-                    win.webContents.send('update-available', r.updateInfo.version);
+                    console.warn("update available", app.getVersion(), "=>", r.updateInfo.version, r);
+                    if (r.updateInfo.version !== version) {
+                        win.webContents.send('update-available', r.updateInfo.version);
+                    }
                 } else {
                     console.warn("update check returned null")
                 }
@@ -156,7 +158,8 @@ function createWindow() {
     tray.setToolTip('build-watcher')
     tray.setContextMenu(contextMenu)
 
-    autoUpdater.on('update-downloaded', () => {
+    autoUpdater.on('update-downloaded', args => {
+        console.log("update downloaded", args)
         win.webContents.send('update-downloaded');
     });
 
