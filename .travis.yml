@@ -1,51 +1,40 @@
-sudo: required
-dist: xenial
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode10.2
+      language: node_js
+      node_js: "10"
+      env:
+        - ELECTRON_CACHE=$HOME/.cache/electron
+        - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
 
-language: node_js
-node_js:
-  - 'lts/erbium'
+    - os: linux
+      services: docker
+      language: generic
 
-#matrix:
-#  include:
-#    - os: osx
-#      osx_image: xcode10.1
-#
-#    - os: linux
-#      dist: xenial
-#      services:
-#        - xvfb
-#      addons:
-#        apt:
-#          packages:
-#            - libxtst-dev
-
-install:
-#  - sudo apt-get update
-#  - sudo apt-get install --no-install-recommends -y libopenjp2-tools
-#  - sudo apt-get install wine32 wine64
-  - uname -a
-  - sudo apt-get update
-  - sudo dpkg --add-architecture i386
-  - wget -O- -q https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_16.04/Release.key | sudo apt-key add -
-  - echo "deb http://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_16.04 ./" | sudo tee /etc/apt/sources.list.d/wine-obs.list
-  - sudo apt-get update
-  - sudo apt install --install-recommends winehq-stable
-  - wine --version
+cache:
+  directories:
+    - node_modules
+    - $HOME/.cache/electron
+    - $HOME/.cache/electron-builder
 
 script:
-  - ./build.sh
+  - |
+    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+      docker run --rm \
+        --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS|APPVEYOR_|CSC_|_TOKEN|_KEY|AWS_|STRIP|BUILD_') \
+        -v ${PWD}:/project \
+        -v ~/.cache/electron:/root/.cache/electron \
+        -v ~/.cache/electron-builder:/root/.cache/electron-builder \
+        electronuserland/builder:wine \
+        /bin/bash -c "yarn --link-duplicates --pure-lockfile && yarn release --linux --win"
+    else
+      yarn release
+    fi
 
-deploy:
-  - provider: script
-    script:
-      - cd electron-app && yarn deploy
-    skip_cleanup: true
-    on:
-      tags: true
-  - provider: script
-    script:
-      - cd electron-app && yarn dist
-    skip_cleanup: true
-    on:
-      tags: false
-      all_ranches: true
+before_cache:
+  - rm -rf $HOME/.cache/electron-builder/wine
+
+branches:
+  except:
+    - "/^v\\d+\\.\\d+\\.\\d+$/"
