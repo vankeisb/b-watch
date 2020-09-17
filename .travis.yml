@@ -3,7 +3,7 @@ node_js:
   - 'lts/erbium'
 
 install:
-  - sudo apt-get install --no-install-recommends -y libopenjp2-tools wine64
+  - sudo apt-get install --no-install-recommends -y libopenjp2-tools
   - yarn install
 
 script:
