@@ -16,7 +16,7 @@
     "start": "cross-env BW_ENV=dev electron ./build/electron.js",
     "pack": "electron-builder --dir",
     "dist": "electron-builder --linux --win --mac --publish never",
-    "deploy": "electron-builder --linux --win --mac --publish always"
+    "deploy": "electron-builder --publish always"
   },
   "build": {
     "appId": "bwatch",
