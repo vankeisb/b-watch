@@ -14,8 +14,8 @@
     "build": "webpack --config ./webpack.config.js",
     "start": "cross-env BW_ENV=dev electron ./build/electron.js",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder --linux --publish never",
-    "deploy": "electron-builder --linux --publish always"
+    "dist": "electron-builder --linux --win --mac --publish never",
+    "deploy": "electron-builder --linux --win --mac --publish always"
   },
   "build": {
     "appId": "bwatch",

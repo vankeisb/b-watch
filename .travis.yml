@@ -6,7 +6,7 @@ install:
   - yarn install
 
 script:
-  - ./build.sh
+  - ./build.sh && cd electron-app && yarn dist
 
 deploy:
   provider: script
