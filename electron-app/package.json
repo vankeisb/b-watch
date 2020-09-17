@@ -9,6 +9,7 @@
     "type": "git",
     "url": "git@github.com:vankeisb/b-watch.git"
   },
+  "postinstall": "install-app-deps",
   "scripts": {
     "clean": "rimraf build dist",
     "build": "webpack --config ./webpack.config.js",
