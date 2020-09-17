@@ -19,6 +19,9 @@ export type Msg
     | { tag: "filter-changed", filter: string }
     | { tag: "open-filter" }
     | { tag: "close-filter" }
+    | { tag: "update-started", newVersion: string }
+    | { tag: "update-downloaded" }
+    | { tag: "update-install" }
     | { tag: "noop" };
 
 

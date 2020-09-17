@@ -3,7 +3,6 @@ export interface Ipc {
     on(channel: string, f:(args: any[]) => void): void;
 }
 
-
 export type Flags
-    = { tag: "browser", daemonPort: number }
-    | { tag: "electron", daemonPort: number, ipc: Ipc, remoteHost?: string };
+    = { tag: "browser", version: string, daemonPort: number }
+    | { tag: "electron", version: string, daemonPort: number, ipc: Ipc, remoteHost?: string };

@@ -14,6 +14,7 @@ import {displayTheme, Theme} from "./ThemeConfig";
 import {fromLambdaSuccess} from "./TaskSuccessfulFromLambda";
 import {ViewFilter} from "./ViewFilter";
 import {docOn} from "./DocumentSubs";
+import {initialModel, Model} from "./Model";
 
 if (Notification.permission !== "granted")
     Notification.requestPermission();
@@ -35,12 +36,6 @@ export function connectToWs(flags: Flags) {
     })
 }
 
-export interface Model {
-    readonly listResponse: Maybe<Result<string,ListResponse>>;
-    readonly tab: Tab;
-    readonly settings: Maybe<Settings>;
-}
-
 const defaultHost = "localhost";
 
 export function getHost(flags: Flags): string {
@@ -54,11 +49,7 @@ export function remoteApi(flags: Flags): RemoteApi {
 }
 
 export function init(flags: Flags): [Model, Cmd<Msg>] {
-    const model: Model = {
-        listResponse: nothing,
-        tab: { tag: "builds", filter: nothing },
-        settings: nothing,
-    };
+    const model: Model = initialModel;
     const loadSettings: Cmd<Msg> = Task.perform(
         loadSettingsFromLocalStorage(),
         settings => ({ tag: "got-settings", settings })
@@ -95,7 +86,7 @@ function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
         );
     }
 
-    function navItem(tab: TabType) {
+    function navItem(tab: TabType, pill?: boolean) {
         return (
             <li className="nav-item" key={tab}>
                 <a className={navLinkClass(tab)}
@@ -110,6 +101,14 @@ function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
                     }}
                 >
                     {tab}
+                    {pill
+                        ? (
+                            <sup>
+                                <span className="badge badge-info">!</span>
+                            </sup>
+                        )
+                        : <></>
+                    }
                 </a>
             </li>
         )
@@ -119,7 +118,7 @@ function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
         <ul className="nav nav-tabs">
             {navItem("builds")}
             {navItem("groups")}
-            {navItem("settings")}
+            {navItem("settings", model.updateStatus.isJust())}
         </ul>
     )
 }
@@ -182,7 +181,11 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
                         }
                         case "settings": {
                             return (
-                                <ViewSettings dispatch={dispatch} settings={model.settings}/>
+                                <ViewSettings dispatch={dispatch}
+                                              settings={model.settings}
+                                              updateStatus={model.updateStatus}
+                                              version={flags.version}
+                                />
                             )
                         }
                     }
@@ -628,6 +631,42 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
             }
             return noCmd(model)
         }
+        case "update-started":
+            return noCmd({
+                ...model,
+                updateStatus: just({
+                    tag: "started",
+                    newVersion: msg.newVersion
+                })
+            })
+        case "update-downloaded": {
+            // TODO state inconsistency : what to do if downloaded update but not in the correct state ?
+            return model.updateStatus
+                .map(updateStatus => {
+                    if (updateStatus.tag === "started") {
+                        return noCmd({
+                            ...model,
+                            updateStatus: just({
+                                tag: "downloaded",
+                                newVersion: updateStatus.newVersion
+                            })
+                        })
+                    }
+                    return noCmd(model)
+                })
+                .withDefaultSupply(() => noCmd(model))
+        }
+        case "update-install": {
+            if (flags.tag === "browser") {
+                return noCmd(model);
+            }
+            return Tuple.t2n(
+                model,
+                taskToCmdNoop(
+                    Task.fromLambda(() => flags.ipc.send("update-install"))
+                )
+            )
+        }
     }
 }
 
@@ -663,16 +702,32 @@ function openBuild(flags: Flags, url: string): Cmd<Msg> {
     }
 }
 
-export function subscriptions(flags: Flags): Sub<Msg> {
+export function subscriptions(flags: Flags, model: Model): Sub<Msg> {
     let ipc: Sub<Msg> = Sub.none();
     if (flags.tag === "electron") {
-        ipc = ipcSub<Msg>(flags.ipc, "server-ready", msgArgs => {
-            debugger;
-            return {
-                tag: "server-ready",
-                args: msgArgs
-            }
-        });
+        ipc = Sub.batch([
+            ipcSub<Msg>(flags.ipc, "server-ready", msgArgs => {
+                return {
+                    tag: "server-ready",
+                    args: msgArgs
+                }
+            }),
+            ipcSub<Msg>(flags.ipc, "update-available", msgArgs => {
+                return {
+                    tag: "update-started", newVersion: msgArgs
+                }
+            }),
+            ipcSub<Msg>(flags.ipc, "update-downloaded", () => {
+                if (model.updateStatus.map(s => s.tag === "started").withDefault(false)) {
+                    return {
+                        tag: "update-downloaded"
+                    }
+                }
+                // TODO better error management
+                console.warn("got update-downloaded from ipc, but not started : " + model.updateStatus)
+                return { tag: "noop" }
+            })
+        ]);
     }
     let wsSub: Sub<Msg> = Sub.none();
     if (ws) {
