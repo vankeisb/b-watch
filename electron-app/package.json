@@ -12,7 +12,7 @@
   "postinstall": "install-app-deps",
   "scripts": {
     "clean": "rimraf build dist",
-    "build": "webpack --config ./webpack.config.js",
+    "build": "yarn clean && webpack --config ./webpack.config.js",
     "start": "cross-env BW_ENV=dev electron ./build/electron.js",
     "pack": "electron-builder --dir",
     "dist": "electron-builder --linux --publish never",
