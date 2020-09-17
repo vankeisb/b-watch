@@ -3,6 +3,7 @@ import {Args, createServerFromArgs, defaultFile, defaultPort} from "bwatch-daemo
 import chalk from "chalk";
 import * as path from "path";
 import {Command} from "commander";
+import { autoUpdater} from "electron-updater";
 
 export interface ElectronArgs extends Args {
     remoteHost?: string;
@@ -16,10 +17,11 @@ if (app.isPackaged) {
 
 export function parseElectronArgs(): ElectronArgs {
     const program = new Command();
+    const version = require("../package.json").version;
     program
         .name(app.getName())
         .description("the b-watch app")
-        .version(app.getVersion())
+        .version(version)
         .option("-b, --builds <path>", `Path to the builds JSON file (defaults to ~/${defaultFile})`)
         .option("-p, --port <port>", `Web server port (defaults to ${defaultPort})`)
         .option("-r, --remote <host>", "Do not start daemon, instead use a remote one")
@@ -27,7 +29,8 @@ export function parseElectronArgs(): ElectronArgs {
     return {
         buildsPath: program.builds || defaultFile,
         port: program.port || defaultPort,
-        remoteHost: program.remote
+        remoteHost: program.remote,
+        version
     }
 }
 
@@ -59,6 +62,26 @@ function createWindow() {
         title: "bwatch",
         icon,
     });
+
+    win.on('minimize', event => {
+        event.preventDefault();
+        win.hide();
+    });
+
+    win.on("close", () => {
+        console.log("App closed");
+    });
+
+    // win.once('ready-to-show', () => {
+    //     autoUpdater.checkForUpdatesAndNotify()
+    //         .then(r => {
+    //             if (r) {
+    //                 console.warn("updpate available", app.getVersion(), "=>", r.updateInfo.version);
+    //             } else {
+    //                 console.warn("update check returned null")
+    //             }
+    //         });
+    // });
 
     ipcMain.once("app-ready", () => {
 
@@ -103,15 +126,6 @@ function createWindow() {
         ? "index.html"
         : "build/index.html";
     win.loadFile(filePath);
-
-    win.on('minimize', event => {
-        event.preventDefault();
-        win.hide();
-    });
-
-    win.on("close", () => {
-        console.log("App closed");
-    });
 
     app.dock && app.dock.hide();
     const tray = new Tray(icon)

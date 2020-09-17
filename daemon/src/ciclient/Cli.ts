@@ -10,21 +10,25 @@ export const defaultFile = os.homedir() + "/.bwatch.json";
 export interface Args {
     buildsPath: string
     port: number
+    version: string
 }
+
+const version = require("../../package.json").version;
 
 export function parseArgs(): Args {
     const program = new Command();
     program
         .name("bwatchd")
         .description("the b-watch daemon")
-        .version("0.0.1")
+        .version(version)
         .option("-b, --builds <path>", 'Path to the builds JSON file (defaults to ~/.bwatch.json)')
         .option("-p, --port <port>", `Web server port (defaults to ${defaultPort})`)
     program.parse(process.argv);
 
     return {
         buildsPath: program.builds || defaultFile,
-        port: program.port || defaultPort
+        port: program.port || defaultPort,
+        version
     }
 }
 
