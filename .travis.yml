@@ -10,7 +10,9 @@ script:
 
 deploy:
   provider: script
-  script: ./deploy.sh
+  script:
+    - cd electron-app && yarn deploy
   skip_cleanup: true
   on:
-    branch: feature/test-release
+    tags: true
+    branch: master
