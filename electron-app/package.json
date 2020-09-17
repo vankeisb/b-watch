@@ -15,7 +15,7 @@
     "build": "webpack --config ./webpack.config.js",
     "start": "cross-env BW_ENV=dev electron ./build/electron.js",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder --linux --win --mac --publish never",
+    "dist": "electron-builder --linux --publish never",
     "deploy": "electron-builder --publish always"
   },
   "build": {
