@@ -1,9 +1,13 @@
+sudo: required
+dist: xenial
+
 language: node_js
 node_js:
   - 'lts/erbium'
 
 install:
   - sudo apt-get install --no-install-recommends -y libopenjp2-tools
+  - sudo apt-get install wine32 wine64
   - yarn install
 
 script:
