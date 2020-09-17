@@ -22,10 +22,7 @@
     "files": [
       "build/**/*",
       "assets/**/*"
-    ],
-    "publish": {
-      "provider": "github"
-    }
+    ]
   },
   "keywords": [],
   "license": "MIT",
