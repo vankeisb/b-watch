@@ -8,18 +8,22 @@ export interface ElectronArgs extends Args {
     remoteHost?: string;
 }
 
+let argv = process.argv;
+
+if (app.isPackaged) {
+    argv = ["dummy", ...process.argv];
+}
 
 export function parseElectronArgs(): ElectronArgs {
     const program = new Command();
     program
-        .name("bwatch")
+        .name(app.getName())
         .description("the b-watch app")
-        .version("0.0.1")
+        .version(app.getVersion())
         .option("-b, --builds <path>", `Path to the builds JSON file (defaults to ~/${defaultFile})`)
         .option("-p, --port <port>", `Web server port (defaults to ${defaultPort})`)
         .option("-r, --remote <host>", "Do not start daemon, instead use a remote one")
-    program.parse(process.argv);
-
+    program.parse(argv);
     return {
         buildsPath: program.builds || defaultFile,
         port: program.port || defaultPort,
@@ -29,6 +33,8 @@ export function parseElectronArgs(): ElectronArgs {
 
 
 const args: ElectronArgs = parseElectronArgs();
+
+console.log("parsed args", args);
 
 ipcMain.on("open-build", (event, args) => {
     const url = args[0];
