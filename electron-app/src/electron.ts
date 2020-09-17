@@ -4,7 +4,6 @@ import chalk from "chalk";
 import * as path from "path";
 import {Command} from "commander";
 import { autoUpdater} from "electron-updater";
-import {version} from "webpack";
 
 export interface ElectronArgs extends Args {
     remoteHost?: string;
@@ -81,7 +80,7 @@ function createWindow() {
             .then(r => {
                 if (r) {
                     console.warn("update available", app.getVersion(), "=>", r.updateInfo.version, r);
-                    if (r.updateInfo.version !== version) {
+                    if (r.updateInfo.version !== app.getVersion()) {
                         win.webContents.send('update-available', r.updateInfo.version);
                     }
                 } else {
