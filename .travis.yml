@@ -12,11 +12,11 @@ matrix:
       services: docker
       language: generic
 
-cache:
-  directories:
-    - node_modules
-    - $HOME/.cache/electron
-    - $HOME/.cache/electron-builder
+#cache:
+#  directories:
+#    - node_modules
+#    - $HOME/.cache/electron
+#    - $HOME/.cache/electron-builder
 
 script:
   - |
@@ -34,9 +34,9 @@ script:
       cd electron-app && yarn deploy
     fi
 
-before_cache:
-  - rm -rf $HOME/.cache/electron-builder/wine
+#before_cache:
+#  - rm -rf $HOME/.cache/electron-builder/wine
 
-branches:
-  except:
-    - "/^v\\d+\\.\\d+\\.\\d+$/"
+#branches:
+#  except:
+#    - "/^v\\d+\\.\\d+\\.\\d+$/"
