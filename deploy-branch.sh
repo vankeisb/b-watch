@@ -5,7 +5,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
     -v ~/.cache/electron:/root/.cache/electron \
     -v ~/.cache/electron-builder:/root/.cache/electron-builder \
     electronuserland/builder:wine \
-    /bin/bash -c "./build.sh && cd electron-app && yarn dist --linux --win"
+    /bin/bash -c "cd electron-app && yarn dist --linux --win"
 else
-  /bin/bash -c "./build.sh && cd electron-app && yarn dist --mac"
+  /bin/bash -c "cd electron-app && yarn dist --mac"
 fi
