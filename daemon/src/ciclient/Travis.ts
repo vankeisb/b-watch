@@ -51,7 +51,7 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
                 console.log("state", "'" + state + "'");
                 if (state === "passed") {
                     return green(url);
-                } else if (state === "failed") {
+                } else if (state === "failed" || state === "errored") {
                     return red(url);
                 }
                 console.error(uuid, "unhandled build state", obj);
