@@ -42,6 +42,9 @@
       "createStartMenuShortcut": true,
       "shortcutName": "bwatch-app",
       "artifactName": "BWatch.Setup.${ext}"
+    },
+    "mac": {
+      "artifactName": "BWatch.${ext}"
     }
   },
   "keywords": [],
