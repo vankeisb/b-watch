@@ -19,6 +19,11 @@ if (app.isPackaged) {
 export function parseElectronArgs(): ElectronArgs {
     const program = new Command();
     const version = require("../package.json").version;
+
+    console.log("┌┐    ┬ ┬┌─┐┌┬┐┌─┐┬ ┬\n" +
+        "├┴┐───│││├─┤ │ │  ├─┤\n" +
+        "└─┘   └┴┘┴ ┴ ┴ └─┘┴ ┴ v" + version)
+
     program
         .name(app.getName())
         .description("the b-watch app")
@@ -45,10 +50,6 @@ ipcMain.on("open-build", (event, args) => {
     shell.openExternal(url);
 });
 
-console.log("PROCESS PATH", process.resourcesPath);
-console.log("DIR NAME", __dirname)
-console.log("FILE NAME", __filename)
-
 function createWindow() {
     // const icons = {
     //     'linux': 'iconTemplateWhite.png',
@@ -60,7 +61,6 @@ function createWindow() {
     const icon = app.isPackaged
         ? process.resourcesPath + "/app.asar/assets/tray-icon/iconTemplateWhite.png"
         : "assets/tray-icon/iconTemplateWhite.png"
-    console.log("ICON", icon);
 
     // Create the browser window.
     const win = new BrowserWindow({
