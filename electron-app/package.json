@@ -1,7 +1,7 @@
 {
   "name": "bwatch-app",
   "productName": "bwatch",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "build/electron.js",
   "description": "build monitoring app",
   "author": "remi@rvkb.com",
@@ -14,7 +14,6 @@
     "clean": "rimraf build dist",
     "build": "yarn clean && webpack --config ./webpack.config.js",
     "start": "cross-env BW_ENV=dev electron ./build/electron.js",
-    "pack": "electron-builder --dir",
     "dist": "electron-builder --linux --publish never",
     "deploy": "electron-builder --publish always"
   },
