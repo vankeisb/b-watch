@@ -135,9 +135,9 @@ function createWindow() {
     const dev = process.env.BW_ENV === "dev";
 
     win.removeMenu();
-    // if (dev) {
+    if (dev) {
         win.webContents.openDevTools();
-    // }
+    }
 
     // and load the index.html of the app.
     // TODO file not at the same location when app is packaged

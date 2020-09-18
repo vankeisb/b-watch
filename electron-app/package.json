@@ -1,7 +1,7 @@
 {
   "name": "bwatch-app",
   "productName": "bwatch",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "build/electron.js",
   "description": "build monitoring app",
   "author": "remi@rvkb.com",
@@ -14,7 +14,7 @@
     "clean": "rimraf build dist",
     "build": "yarn clean && webpack --config ./webpack.config.js",
     "start": "cross-env BW_ENV=dev electron ./build/electron.js",
-    "dist": "electron-builder --linux --publish never",
+    "dist": "electron-builder --publish never",
     "deploy": "electron-builder --publish always"
   },
   "build": {
@@ -30,6 +30,21 @@
     },
     "appImage": {
       "artifactName": "${name}-${arch}.AppImage"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "deleteAppDataOnUninstall": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "bwatch-app",
+      "artifactName": "BWatch.Setup.${ext}"
+    },
+    "mac": {
+      "artifactName": "BWatch.${ext}"
     }
   },
   "keywords": [],
