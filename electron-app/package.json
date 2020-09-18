@@ -28,6 +28,9 @@
       "publish": {
         "provider": "github"
       }
+    },
+    "appImage": {
+      "artifactName": "${name}-${arch}.AppImage"
     }
   },
   "keywords": [],
