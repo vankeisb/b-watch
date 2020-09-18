@@ -30,6 +30,18 @@
     },
     "appImage": {
       "artifactName": "${name}-${arch}.AppImage"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "deleteAppDataOnUninstall": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "bwatch-app",
+      "artifactName": "BWatch.Setup.${ext}"
     }
   },
   "keywords": [],
