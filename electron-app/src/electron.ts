@@ -4,7 +4,6 @@ import chalk from "chalk";
 import * as path from "path";
 import {Command} from "commander";
 import { autoUpdater} from "electron-updater";
-import {version} from "webpack";
 
 export interface ElectronArgs extends Args {
     remoteHost?: string;
@@ -39,20 +38,29 @@ export function parseElectronArgs(): ElectronArgs {
 
 const args: ElectronArgs = parseElectronArgs();
 
-console.log("parsed args", args);
+console.log("PARSED ARGS", args);
 
 ipcMain.on("open-build", (event, args) => {
     const url = args[0];
     shell.openExternal(url);
 });
 
+console.log("PROCESS PATH", process.resourcesPath);
+console.log("DIR NAME", __dirname)
+console.log("FILE NAME", __filename)
+
 function createWindow() {
-    const icons = {
-        'linux': 'iconTemplateWhite.png',
-        'win32': 'windows-icon.png'
-    }
-    const iconName = icons[process.platform] || 'iconTemplate.png'
-    const icon = path.join('assets', 'tray-icon', iconName)
+    // const icons = {
+    //     'linux': 'iconTemplateWhite.png',
+    //     'win32': 'windows-icon.png'
+    // }
+    // const iconName = icons[process.platform] || 'iconTemplate.png'
+    // const icon = path.join('assets', 'tray-icon', iconName)
+
+    const icon = app.isPackaged
+        ? process.resourcesPath + "/app.asar/assets/tray-icon/iconTemplateWhite.png"
+        : "assets/tray-icon/iconTemplateWhite.png"
+    console.log("ICON", icon);
 
     // Create the browser window.
     const win = new BrowserWindow({
@@ -81,7 +89,7 @@ function createWindow() {
             .then(r => {
                 if (r) {
                     console.warn("update available", app.getVersion(), "=>", r.updateInfo.version, r);
-                    if (r.updateInfo.version !== version) {
+                    if (r.updateInfo.version !== app.getVersion()) {
                         win.webContents.send('update-available', r.updateInfo.version);
                     }
                 } else {
