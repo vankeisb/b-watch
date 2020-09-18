@@ -14,7 +14,7 @@
     "clean": "rimraf build dist",
     "build": "yarn clean && webpack --config ./webpack.config.js",
     "start": "cross-env BW_ENV=dev electron ./build/electron.js",
-    "dist": "electron-builder --linux --publish never",
+    "dist": "yarn build && electron-builder --publish never",
     "deploy": "electron-builder --publish always"
   },
   "build": {
