@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "Yalla"
-
 yarn install && \
 echo "*** common ***" && \
 cd common && yarn build && cd .. && \

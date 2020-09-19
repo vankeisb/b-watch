@@ -76,13 +76,12 @@ function createWindow() {
 
     app.whenReady().then(() => {
 
-        const icon = "assets/tray-icon/iconTemplateWhite.png";
+        const icon = "assets/tray-icon.png";
 
         const trayIcon = app.isPackaged
             ? process.resourcesPath + "/app.asar/" + icon
             : icon
 
-        //    app.dock && app.dock.hide();
         tray = new Tray(trayIcon)
         const contextMenu = Menu.buildFromTemplate([
                 {
@@ -90,6 +89,7 @@ function createWindow() {
                     click: () => {
                         console.log("clicked show builds")
                         win.show();
+                        app.dock && app.dock.show();
                     }
                 },
                 {
@@ -112,13 +112,21 @@ function createWindow() {
     // })
 
     // Create the browser window.
+
+    const windowIcon = "assets/tray-icon.png";
+
+    const icon = app.isPackaged
+        ? process.resourcesPath + "/app.asar/" + windowIcon
+        : windowIcon
+
     const win = new BrowserWindow({
         width: 400,
         height: 600,
         webPreferences: {
             nodeIntegration: true
         },
-        title: "bwatch"
+        title: "bwatch",
+        icon
     });
 
     win.on("close", e => {
@@ -126,6 +134,7 @@ function createWindow() {
             console.log("Minimizing to tray");
             e.preventDefault();
             win.hide();
+            app.dock && app.dock.hide();
         }
     });
 

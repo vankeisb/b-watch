@@ -1,5 +1,5 @@
 {
-  "name": "bwatch-app",
+  "name": "bwatch",
   "productName": "bwatch",
   "version": "0.1.3",
   "main": "build/electron.js",
@@ -28,23 +28,26 @@
         "provider": "github"
       }
     },
-    "appImage": {
-      "artifactName": "${name}-${arch}.AppImage"
-    },
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "icon": "icon.ico"
     },
     "nsis": {
       "deleteAppDataOnUninstall": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "bwatch-app",
+      "shortcutName": "bwatch",
       "artifactName": "BWatch.Setup.${ext}"
     },
     "mac": {
       "artifactName": "BWatch.${ext}"
+    },
+    "linux": {
+      "target": "AppImage",
+      "artifactName": "${name}-${arch}.${ext}",
+      "category": "Utility"
     }
   },
   "keywords": [],
