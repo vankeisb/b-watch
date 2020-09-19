@@ -76,7 +76,7 @@ function createWindow() {
 
     app.whenReady().then(() => {
 
-        const icon = "assets/tray-icon/iconTemplateWhite.png";
+        const icon = "assets/tray-icon.png";
 
         const trayIcon = app.isPackaged
             ? process.resourcesPath + "/app.asar/" + icon
@@ -113,7 +113,7 @@ function createWindow() {
 
     // Create the browser window.
 
-    const windowIcon = "assets/tray-icon/iconTemplateWhite.png";
+    const windowIcon = "assets/tray-icon.png";
 
     const icon = app.isPackaged
         ? process.resourcesPath + "/app.asar/" + windowIcon
