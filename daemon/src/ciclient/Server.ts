@@ -6,10 +6,14 @@ import {CIClient} from "./CIClient";
 import {LocalApi, toBuildInfo} from "./LocalApi";
 import {Configuration} from "./Configuration";
 
+const app = express();
+
 export class Server {
 
     private readonly ciClient: CIClient;
     private sockets: WebSocket[] = [];
+    private server: http.Server;
+    private wss: WebSocket.Server;
 
     constructor(
         readonly port: number,
@@ -23,16 +27,14 @@ export class Server {
                 )
             );
         });
-    }
 
-    start(onStarted?: () => void) {
-        const app = express();
-        const server = http.createServer(app);
-        const wss = new WebSocket.Server({server});
+        this.server = http.createServer(app);
+        this.server.timeout = 1000;
+        this.wss = new WebSocket.Server({server: this.server});
         const api = new LocalApi(this.ciClient);
 
 
-        wss.on('connection', (ws: WebSocket) => {
+        this.wss.on('connection', (ws: WebSocket) => {
             // add to connected sockets
             this.sockets.push(ws);
 
@@ -73,14 +75,42 @@ export class Server {
             })
 
         })
+    }
 
+    start(onStarted?: () => void) {
         const host = "0.0.0.0";
-        server.listen(this.port, host, () => {
+        this.server.listen(this.port, host, () => {
             console.log(`server started on http://${host}:${this.port}`)
             onStarted?.();
         });
 
     }
 
+    close(callback:() => void) {
+        console.log("shutting down server");
+        let httpClosed = false;
+        let wssClosed = false;
+
+        let cbWrapper = () => {
+            if (httpClosed && wssClosed) {
+                console.log("server closed")
+                callback()
+            }
+        }
+        console.log("closing CIClient")
+        this.ciClient.close()
+        console.log("closing http")
+        this.server.close(() => {
+            console.log("http closed")
+            httpClosed = true
+            cbWrapper()
+        })
+        console.log("closing wss")
+        this.wss.close(() => {
+            console.log("wss closed")
+            wssClosed = true
+            cbWrapper()
+        })
+    }
 
 }

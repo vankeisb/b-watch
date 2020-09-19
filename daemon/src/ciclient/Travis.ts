@@ -84,7 +84,11 @@ export class TravisFetch extends Fetch<TravisConfig> {
     constructor(uuid: string, config: TravisConfig, onResult: (status: BuildStatus) => void) {
         super(uuid, config, onResult);
         getBuildStatus(uuid, config.token, config)
-            .then(onResult)
+            .then(value => {
+                if (!this._canceled) {
+                    onResult(value)
+                }
+            })
     }
 
     cancel(): void {
