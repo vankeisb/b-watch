@@ -1,5 +1,5 @@
 {
-  "name": "bwatch-app",
+  "name": "bwatch",
   "productName": "bwatch",
   "version": "0.1.3",
   "main": "build/electron.js",
@@ -28,9 +28,6 @@
         "provider": "github"
       }
     },
-    "appImage": {
-      "artifactName": "${name}-${arch}.AppImage"
-    },
     "win": {
       "target": [
         "nsis"
@@ -45,6 +42,11 @@
     },
     "mac": {
       "artifactName": "BWatch.${ext}"
+    },
+    "linux": {
+      "target": "AppImage",
+      "artifactName": "${name}-${arch}.${ext}",
+      "category": "Utility"
     }
   },
   "keywords": [],
