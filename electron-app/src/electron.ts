@@ -51,16 +51,41 @@ ipcMain.on("open-build", (event, args) => {
 });
 
 function createWindow() {
-    // const icons = {
-    //     'linux': 'iconTemplateWhite.png',
-    //     'win32': 'windows-icon.png'
-    // }
-    // const iconName = icons[process.platform] || 'iconTemplate.png'
+
+    const icons = {
+        'linux': 'iconTemplateWhite.png',
+        'win32': 'windows-icon.png'
+    }
+    const iconName = icons[process.platform] || 'iconTemplate.png'
     // const icon = path.join('assets', 'tray-icon', iconName)
 
-    const icon = app.isPackaged
-        ? process.resourcesPath + "/app.asar/assets/tray-icon/iconTemplateWhite.png"
+    const trayIcon = app.isPackaged
+        ? process.resourcesPath + "/app.asar/assets/tray-icon/" + iconName
         : "assets/tray-icon/iconTemplateWhite.png"
+
+    app.whenReady().then(() => {
+//    app.dock && app.dock.hide();
+        const tray = new Tray(trayIcon)
+        const contextMenu = Menu.buildFromTemplate([
+                {
+                    label: 'Show Builds',
+                    click: () => {
+                        console.log("clicked show builds")
+                        win.show();
+                    }
+                },
+                {
+                    label: 'Quit',
+                    click: () => {
+                        debugger;
+                        app.quit();
+                    }
+                }
+            ]
+        )
+        tray.setToolTip('build-watcher')
+        tray.setContextMenu(contextMenu)
+    })
 
     // Create the browser window.
     const win = new BrowserWindow({
@@ -69,8 +94,7 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true
         },
-        title: "bwatch",
-        icon,
+        title: "bwatch"
     });
 
     win.on('minimize', event => {
@@ -145,26 +169,6 @@ function createWindow() {
         ? "index.html"
         : "build/index.html";
     win.loadFile(filePath);
-
-    app.dock && app.dock.hide();
-    const tray = new Tray(icon)
-    const contextMenu = Menu.buildFromTemplate([
-            {
-                label: 'Show Builds'
-                , click: () => {
-                    win.show();
-                }
-            },
-            {
-                label: 'Quit'
-                , click: () => {
-                    app.quit();
-                }
-            }
-        ]
-    )
-    tray.setToolTip('build-watcher')
-    tray.setContextMenu(contextMenu)
 
     autoUpdater.on('update-downloaded', args => {
         console.log("update downloaded", args)
