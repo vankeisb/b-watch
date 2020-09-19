@@ -50,22 +50,25 @@ ipcMain.on("open-build", (event, args) => {
     shell.openExternal(url);
 });
 
+
+// need to keep this as a global to avoid garbaging
+let tray = null;
+
+let quitting = false;
+
 function createWindow() {
 
-    const icons = {
-        'linux': 'iconTemplateWhite.png',
-        'win32': 'windows-icon.png'
-    }
-    const iconName = icons[process.platform] || 'iconTemplate.png'
-    // const icon = path.join('assets', 'tray-icon', iconName)
-
-    const trayIcon = app.isPackaged
-        ? process.resourcesPath + "/app.asar/assets/tray-icon/" + iconName
-        : "assets/tray-icon/iconTemplateWhite.png"
 
     app.whenReady().then(() => {
-//    app.dock && app.dock.hide();
-        const tray = new Tray(trayIcon)
+
+        const icon = "assets/tray-icon/iconTemplateWhite.png";
+
+        const trayIcon = app.isPackaged
+            ? process.resourcesPath + "/app.asar/" + icon
+            : icon
+        
+        //    app.dock && app.dock.hide();
+        tray = new Tray(trayIcon)
         const contextMenu = Menu.buildFromTemplate([
                 {
                     label: 'Show Builds',
@@ -77,7 +80,7 @@ function createWindow() {
                 {
                     label: 'Quit',
                     click: () => {
-                        debugger;
+                        quitting = true;
                         app.quit();
                     }
                 }
@@ -97,12 +100,11 @@ function createWindow() {
         title: "bwatch"
     });
 
-    win.on('minimize', event => {
-        event.preventDefault();
-        win.hide();
-    });
-
-    win.on("close", () => {
+    win.on("close", e => {
+        if (!quitting) {
+            e.preventDefault();
+            win.hide();          
+        }
         console.log("App closed");
     });
 
