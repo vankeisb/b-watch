@@ -29,6 +29,7 @@ export class Server {
         });
 
         this.server = http.createServer(app);
+        this.server.timeout = 1000;
         this.wss = new WebSocket.Server({server: this.server});
         const api = new LocalApi(this.ciClient);
 
