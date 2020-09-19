@@ -112,13 +112,21 @@ function createWindow() {
     // })
 
     // Create the browser window.
+
+    const windowIcon = "assets/tray-icon/iconTemplateWhite.png";
+
+    const icon = app.isPackaged
+        ? process.resourcesPath + "/app.asar/" + windowIcon
+        : windowIcon
+
     const win = new BrowserWindow({
         width: 400,
         height: 600,
         webPreferences: {
             nodeIntegration: true
         },
-        title: "bwatch"
+        title: "bwatch",
+        icon
     });
 
     win.on("close", e => {
