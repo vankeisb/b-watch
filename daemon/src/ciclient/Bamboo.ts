@@ -46,6 +46,8 @@ const BambooResponseDecoder: Decoder<BambooResult> =
 
 export class BambooFetch extends Fetch<BambooConfig> {
 
+    private _canceled: boolean = false;
+
     constructor(uuid: string, config: BambooConfig, onResult: (status: BuildStatus) => void) {
         super(uuid, config, onResult);
 
@@ -74,6 +76,9 @@ export class BambooFetch extends Fetch<BambooConfig> {
         fetch(url)
             .then(r => r.text())
             .then(s => {
+                if (this._canceled) {
+                    return;
+                }
                 const res = BambooResponseDecoder.decodeString(s);
                 switch (res.tag) {
                     case "Ok": {
@@ -98,13 +103,15 @@ export class BambooFetch extends Fetch<BambooConfig> {
                 }
             })
             .catch(e => {
-                console.error(e);
-                onResult(error(e.message));
+                if (!this._canceled) {
+                    console.error(e);
+                    onResult(error(e.message));
+                }
             });
     }
 
     cancel(): void {
-
+        this._canceled = true;
     }
 }
 

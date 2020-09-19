@@ -56,6 +56,21 @@ let tray = null;
 
 let quitting = false;
 
+const serverRes = createServerFromArgs(args);
+
+let server;
+
+switch (serverRes.tag) {
+    case "Ok":
+        server = serverRes.value;
+        break;
+    case "Err": {
+        console.log(chalk.red(server.err));
+        app.exit(1);
+        break;
+    }
+}
+
 function createWindow() {
 
 
@@ -66,7 +81,7 @@ function createWindow() {
         const trayIcon = app.isPackaged
             ? process.resourcesPath + "/app.asar/" + icon
             : icon
-        
+
         //    app.dock && app.dock.hide();
         tray = new Tray(trayIcon)
         const contextMenu = Menu.buildFromTemplate([
@@ -81,7 +96,10 @@ function createWindow() {
                     label: 'Quit',
                     click: () => {
                         quitting = true;
-                        app.quit();
+                        console.log("closing")
+                        server.close(() =>
+                            app.quit()
+                        );
                     }
                 }
             ]
@@ -89,6 +107,9 @@ function createWindow() {
         tray.setToolTip('build-watcher')
         tray.setContextMenu(contextMenu)
     })
+    // tray.on("click", () => {
+    //     win.show()
+    // })
 
     // Create the browser window.
     const win = new BrowserWindow({
@@ -102,10 +123,10 @@ function createWindow() {
 
     win.on("close", e => {
         if (!quitting) {
+            console.log("Minimizing to tray");
             e.preventDefault();
-            win.hide();          
+            win.hide();
         }
-        console.log("App closed");
     });
 
     ipcMain.once("app-ready", () => {
@@ -131,23 +152,11 @@ function createWindow() {
             win.webContents.send("server-ready", args);
         } else {
             console.log("app ready, starting server");
-            const server = createServerFromArgs(args);
-            switch (server.tag) {
-                case "Ok": {
-                    server.value.start(() => {
-                        console.log("server started, notifying app");
-                        win.webContents.send("server-ready", args);
-                    });
-                    break;
-                }
-                case "Err": {
-                    console.log(chalk.red(server.err));
-                    app.exit(1);
-                    break;
-                }
-            }
+            server.start(() => {
+                console.log("server started, notifying app");
+                win.webContents.send("server-ready", args);
+            });
         }
-
     });
 
     ipcMain.on("renderer-ready", () => {
