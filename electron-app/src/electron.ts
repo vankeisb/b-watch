@@ -82,7 +82,6 @@ function createWindow() {
             ? process.resourcesPath + "/app.asar/" + icon
             : icon
 
-        //    app.dock && app.dock.hide();
         tray = new Tray(trayIcon)
         const contextMenu = Menu.buildFromTemplate([
                 {
@@ -90,6 +89,7 @@ function createWindow() {
                     click: () => {
                         console.log("clicked show builds")
                         win.show();
+                        app.dock && app.dock.show();
                     }
                 },
                 {
@@ -134,6 +134,7 @@ function createWindow() {
             console.log("Minimizing to tray");
             e.preventDefault();
             win.hide();
+            app.dock && app.dock.hide();
         }
     });
 
