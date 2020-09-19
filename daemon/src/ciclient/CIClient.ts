@@ -23,6 +23,9 @@ export class CIClient {
         return this.builds;
     }
 
+    close() {
+        this.builds.forEach(b => b.stop());
+    }
 }
 
 export class Build {

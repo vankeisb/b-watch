@@ -50,17 +50,66 @@ ipcMain.on("open-build", (event, args) => {
     shell.openExternal(url);
 });
 
-function createWindow() {
-    // const icons = {
-    //     'linux': 'iconTemplateWhite.png',
-    //     'win32': 'windows-icon.png'
-    // }
-    // const iconName = icons[process.platform] || 'iconTemplate.png'
-    // const icon = path.join('assets', 'tray-icon', iconName)
 
-    const icon = app.isPackaged
-        ? process.resourcesPath + "/app.asar/assets/tray-icon/iconTemplateWhite.png"
-        : "assets/tray-icon/iconTemplateWhite.png"
+// need to keep this as a global to avoid garbaging
+let tray = null;
+
+let quitting = false;
+
+const serverRes = createServerFromArgs(args);
+
+let server;
+
+switch (serverRes.tag) {
+    case "Ok":
+        server = serverRes.value;
+        break;
+    case "Err": {
+        console.log(chalk.red(server.err));
+        app.exit(1);
+        break;
+    }
+}
+
+function createWindow() {
+
+
+    app.whenReady().then(() => {
+
+        const icon = "assets/tray-icon/iconTemplateWhite.png";
+
+        const trayIcon = app.isPackaged
+            ? process.resourcesPath + "/app.asar/" + icon
+            : icon
+
+        //    app.dock && app.dock.hide();
+        tray = new Tray(trayIcon)
+        const contextMenu = Menu.buildFromTemplate([
+                {
+                    label: 'Show Builds',
+                    click: () => {
+                        console.log("clicked show builds")
+                        win.show();
+                    }
+                },
+                {
+                    label: 'Quit',
+                    click: () => {
+                        quitting = true;
+                        console.log("closing")
+                        server.close(() =>
+                            app.quit()
+                        );
+                    }
+                }
+            ]
+        )
+        tray.setToolTip('build-watcher')
+        tray.setContextMenu(contextMenu)
+    })
+    // tray.on("click", () => {
+    //     win.show()
+    // })
 
     // Create the browser window.
     const win = new BrowserWindow({
@@ -69,17 +118,15 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true
         },
-        title: "bwatch",
-        icon,
+        title: "bwatch"
     });
 
-    win.on('minimize', event => {
-        event.preventDefault();
-        win.hide();
-    });
-
-    win.on("close", () => {
-        console.log("App closed");
+    win.on("close", e => {
+        if (!quitting) {
+            console.log("Minimizing to tray");
+            e.preventDefault();
+            win.hide();
+        }
     });
 
     ipcMain.once("app-ready", () => {
@@ -105,23 +152,11 @@ function createWindow() {
             win.webContents.send("server-ready", args);
         } else {
             console.log("app ready, starting server");
-            const server = createServerFromArgs(args);
-            switch (server.tag) {
-                case "Ok": {
-                    server.value.start(() => {
-                        console.log("server started, notifying app");
-                        win.webContents.send("server-ready", args);
-                    });
-                    break;
-                }
-                case "Err": {
-                    console.log(chalk.red(server.err));
-                    app.exit(1);
-                    break;
-                }
-            }
+            server.start(() => {
+                console.log("server started, notifying app");
+                win.webContents.send("server-ready", args);
+            });
         }
-
     });
 
     ipcMain.on("renderer-ready", () => {
@@ -145,26 +180,6 @@ function createWindow() {
         ? "index.html"
         : "build/index.html";
     win.loadFile(filePath);
-
-    app.dock && app.dock.hide();
-    const tray = new Tray(icon)
-    const contextMenu = Menu.buildFromTemplate([
-            {
-                label: 'Show Builds'
-                , click: () => {
-                    win.show();
-                }
-            },
-            {
-                label: 'Quit'
-                , click: () => {
-                    app.quit();
-                }
-            }
-        ]
-    )
-    tray.setToolTip('build-watcher')
-    tray.setContextMenu(contextMenu)
 
     autoUpdater.on('update-downloaded', args => {
         console.log("update downloaded", args)
