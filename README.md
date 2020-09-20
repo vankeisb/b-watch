@@ -24,8 +24,7 @@ Project uses yarn workspaces. A convenience script can be used to build everythi
 
     ./build.sh
 
-> following instructions will use the `bwatch.sample.jcon` file, so you'll need to set `TRAVIS_TOKEN` to a valid github token. You can use another file with the `--builds` option.
-
+> following instructions will use the `bwatch.sample.json` file
            
 Start the daemon :
 
