@@ -44,13 +44,6 @@ export class Server {
             })
         });
 
-
-        const builds = this.ciClient.list();
-        console.log("Loaded builds :")
-        builds.forEach(b => console.log(b.uuid, toBuildInfo(b).info));
-        console.log("Starting to poll")
-        builds.forEach(b => b.start());
-
         app.use(function(req, res, next) {
             res.header("Access-Control-Allow-Origin", "*");
             res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -77,13 +70,32 @@ export class Server {
         })
     }
 
-    start(onStarted?: () => void) {
-        const host = "0.0.0.0";
-        this.server.listen(this.port, host, () => {
-            console.log(`server started on http://${host}:${this.port}`)
-            onStarted?.();
-        });
+    start(onStarted: (e?:Error) => void) {
 
+        const propagateUncaught = (err:Error) => {
+            console.log("propagating uncaught exception")
+            onStarted(err)
+        }
+
+        process.on('uncaughtException', propagateUncaught);
+        console.log("Server starting")
+        const host = "0.0.0.0";
+        this.server.on("error", e => {
+            console.log("server error event", e)
+            onStarted(e);
+        })
+        this.server.on("listening", () => {
+            console.log(`server started on http://${host}:${this.port}`)
+            onStarted();
+            console.log("Starting to poll")
+            this.ciClient.list().forEach(b => b.start());
+        })
+        try {
+            this.server.listen(this.port)
+        } catch (e) {
+            console.log("server listen error", e)
+            onStarted(e)
+        }
     }
 
     close(callback:() => void) {

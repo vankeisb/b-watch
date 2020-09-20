@@ -56,60 +56,51 @@ let tray = null;
 
 let quitting = false;
 
-const serverRes = createServerFromArgs(args);
+const server = createServerFromArgs(args);
 
-let server;
-
-switch (serverRes.tag) {
-    case "Ok":
-        server = serverRes.value;
-        break;
-    case "Err": {
-        console.log(chalk.red(server.err));
-        app.exit(1);
-        break;
-    }
-}
+// switch (serverRes.tag) {
+//     case "Ok":
+//         server = serverRes.value;
+//         break;
+//     case "Err": {
+//         console.log(chalk.red(serverRes.err));
+//         app.exit(1);
+//         break;
+//     }
+// }
 
 function createWindow() {
 
+    const trayIcon = app.isPackaged
+        ? process.resourcesPath + "/app.asar/assets/tray-icon.png"
+        : "assets/tray-icon.png"
 
-    app.whenReady().then(() => {
-
-        const icon = "assets/tray-icon.png";
-
-        const trayIcon = app.isPackaged
-            ? process.resourcesPath + "/app.asar/" + icon
-            : icon
-
-        tray = new Tray(trayIcon)
-        const contextMenu = Menu.buildFromTemplate([
-                {
-                    label: 'Show Builds',
-                    click: () => {
-                        console.log("clicked show builds")
-                        win.show();
-                        app.dock && app.dock.show();
-                    }
-                },
-                {
-                    label: 'Quit',
-                    click: () => {
-                        quitting = true;
-                        console.log("closing")
-                        server.close(() =>
+    tray = new Tray(trayIcon)
+    const contextMenu = Menu.buildFromTemplate([
+            {
+                label: 'Show Builds',
+                click: () => {
+                    console.log("clicked show builds")
+                    win.show();
+                    app.dock && app.dock.show();
+                }
+            },
+            {
+                label: 'Quit',
+                click: () => {
+                    quitting = true;
+                    console.log("quitting app")
+                    if (server.tag === "Ok") {
+                        server.value.close(() =>
                             app.quit()
                         );
                     }
                 }
-            ]
-        )
-        tray.setToolTip('build-watcher')
-        tray.setContextMenu(contextMenu)
-    })
-    // tray.on("click", () => {
-    //     win.show()
-    // })
+            }
+        ]
+    )
+    tray.setToolTip('build-watcher')
+    tray.setContextMenu(contextMenu)
 
     // Create the browser window.
 
@@ -160,11 +151,27 @@ function createWindow() {
             console.log("remote host provided", chalk.green(args.remoteHost), chalk.yellow("will not start local daemon"));
             win.webContents.send("server-ready", args);
         } else {
-            console.log("app ready, starting server");
-            server.start(() => {
-                console.log("server started, notifying app");
-                win.webContents.send("server-ready", args);
-            });
+            console.log("app ready, server=", server);
+            switch (server.tag) {
+                case "Ok": {
+                    console.log("starting server...")
+                    server.value.start(e => {
+                        if (e) {
+                            console.error("error starting server", e);
+                            win.webContents.send("server-error", e.message);
+                        } else {
+                            console.log("server started, notifying app");
+                            win.webContents.send("server-ready", args);
+                        }
+                    });
+                    break;
+                }
+                case "Err": {
+                    console.log("server error", server.err);
+                    win.webContents.send("server-error", server.err);
+                    break;
+                }
+            }
         }
     });
 

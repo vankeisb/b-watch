@@ -1,4 +1,4 @@
-import {Cmd, Dispatcher, just, Maybe, nothing, ok, Result, Sub, Task, Tuple} from "react-tea-cup";
+import {Cmd, Dispatcher, just, nothing, ok, err, Result, Sub, Task, Tuple} from "react-tea-cup";
 import * as React from "react";
 import {gotBuilds, gotWsMessage, Msg} from "./Msg";
 import {Api, BuildInfo, BuildInfoDecoder, ListResponse, RemoteApi} from "bwatch-common";
@@ -124,11 +124,10 @@ function viewTabs(dispatch: Dispatcher<Msg>, model: Model) {
 }
 
 
-function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
+function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model, listResponse: ListResponse) {
     const filter = model.tab.tag === "builds" || model.tab.tag === "groups"
         ? model.tab.filter
         : nothing;
-
 
 
     function buildMatches(buildInfo: BuildInfo): boolean {
@@ -139,7 +138,7 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
                     return str.toLowerCase().indexOf(f.toLowerCase()) !== -1;
                 }
 
-                const { info } = buildInfo;
+                const {info} = buildInfo;
                 switch (info.tag) {
                     case "travis": {
                         return strMatches(info.repository)
@@ -153,74 +152,72 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
             .withDefault(true)
     }
 
-    return model.listResponse
-        .map(r =>
-            r.match(
-                listResponse => {
-                    switch (model.tab.tag) {
-                        case "builds":
-                            return (
-                                <div className="scroll-pane">
-                                    <div className="builds">
-                                        {listResponse.builds
-                                            .filter(buildMatches)
-                                            .map(build => (
-                                            <ViewBuildInfo
-                                                key={build.uuid}
-                                                dispatch={dispatch}
-                                                buildInfo={build}
-                                                flags={flags}/>
-                                        ))}
-                                    </div>
-                                </div>
-                            );
-                        case "groups": {
-                            return (
-                                <ViewGroups dispatch={dispatch} listResponse={listResponse} filter={model.tab.filter}/>
-                            )
-                        }
-                        case "settings": {
-                            return (
-                                <ViewSettings dispatch={dispatch}
-                                              settings={model.settings}
-                                              updateStatus={model.updateStatus}
-                                              version={flags.version}
-                                />
-                            )
-                        }
-                    }
-                },
-                err => {
-                    return (
-                        <div className="error">
-                            <div className="alert alert-danger">
-                                <strong>Error!</strong> {err}
-                            </div>
-                            <button
-                                type="button"
-                                className="btn btn-primary"
-                                onClick={() => dispatch({ tag: "reload" })}>
-                                ↻ Reload
-                            </button>
-                        </div>
-                    )
-                }
+    switch (model.tab.tag) {
+        case "builds":
+            return (
+                <div className="scroll-pane">
+                    <div className="builds">
+                        {listResponse.builds
+                            .filter(buildMatches)
+                            .map(build => (
+                                <ViewBuildInfo
+                                    key={build.uuid}
+                                    dispatch={dispatch}
+                                    buildInfo={build}
+                                    flags={flags}/>
+                            ))}
+                    </div>
+                </div>
+            );
+        case "groups": {
+            return (
+                <ViewGroups dispatch={dispatch} listResponse={listResponse} filter={model.tab.filter}/>
             )
-        )
-        .withDefaultSupply(() => (
-            <p>Loading...</p>
-        ))}
+        }
+        case "settings": {
+            return (
+                <ViewSettings dispatch={dispatch}
+                              settings={model.settings}
+                              updateStatus={model.updateStatus}
+                              version={flags.version}
+                />
+            )
+        }
+    }
+}
 
 export function view(flags: Flags, dispatch: Dispatcher<Msg>, model: Model) {
     return (
         <>
             {viewModal(flags, dispatch, model)}
             <div className="bwatch">
-                {viewTabs(dispatch, model)}
-                <div className="content">
-                    <ViewFilter dispatch={dispatch} model={model} />
-                    {viewTabContent(flags, dispatch, model)}
-                </div>
+                {model.listResponse
+                    .map(lr =>
+                        lr.match(
+                            listResponse => (
+                                <>
+                                    {viewTabs(dispatch, model)}
+                                    <div className="content">
+                                        <ViewFilter dispatch={dispatch} model={model} />
+                                        {viewTabContent(flags, dispatch, model, listResponse)}
+                                    </div>
+                                </>
+                            ),
+                            e => (
+                                <div className="error">
+                                    <div className="alert alert-danger">
+                                        Error: {e}
+                                    </div>
+                                </div>
+                            )
+                        )
+                    )
+                    .withDefaultSupply(() =>
+                        <p>
+                            Loading...
+                        </p>
+                    )
+                }
             </div>
             { model.tab.tag === "groups" && model.tab.selectedGroup.isJust()
                 ? <div className="modal-backdrop show"></div>
@@ -497,17 +494,24 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
             break;
         }
         case "server-ready": {
-            const connectCmd: Cmd<Msg> = Task.attempt(
-                Task.fromLambda(() => {
-                    connectToWs(flags);
-                    return true;
-                }),
-                () => ({tag: "noop"})
-            );
+            return msg.err
+                .map(e => noCmd({
+                    ...model,
+                    listResponse: just(err(e))
+                }))
+                .withDefaultSupply(() => {
+                    const connectCmd: Cmd<Msg> = Task.attempt(
+                        Task.fromLambda(() => {
+                            connectToWs(flags);
+                            return true;
+                        }),
+                        () => ({tag: "noop"})
+                    );
 
-            return Tuple.fromNative(listBuilds(remoteApi(flags), model))
-                .mapSecond(c => Cmd.batch([connectCmd, c]))
-                .toNative()
+                    return Tuple.fromNative(listBuilds(remoteApi(flags), model))
+                        .mapSecond(c => Cmd.batch([connectCmd, c]))
+                        .toNative()
+                });
         }
         case "tab-clicked": {
             return noCmd(
@@ -709,7 +713,13 @@ export function subscriptions(flags: Flags, model: Model): Sub<Msg> {
             ipcSub<Msg>(flags.ipc, "server-ready", msgArgs => {
                 return {
                     tag: "server-ready",
-                    args: msgArgs
+                    err: nothing
+                }
+            }),
+            ipcSub<Msg>(flags.ipc, "server-error", msgArgs => {
+                return {
+                    tag: "server-ready",
+                    err: just(msgArgs)
                 }
             }),
             ipcSub<Msg>(flags.ipc, "update-available", msgArgs => {
@@ -850,6 +860,7 @@ class IpcSub<M> extends Sub<M> {
     }
 
     onIpcMessage(args: any[]) {
+        console.log("onIpcMessage", this.channel, args)
         this.dispatch(this.toMsg(args));
     }
 }
