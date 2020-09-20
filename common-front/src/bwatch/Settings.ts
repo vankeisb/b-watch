@@ -46,16 +46,19 @@ export function loadSettingsFromLocalStorage(): Task<never, Settings>{
                     }
                 }
                 case "Ok": {
+                    console.log("loaded settings", r.value);
                     return r.value;
                 }
             }
         }
+        console.warn("no settings found in local storage, using default settings")
         return defaultSettings;
     });
 }
 
 export function saveSettingsToLocalStorage(settings: Settings): Task<never, Settings> {
     return fromLambdaSuccess(() => {
+        console.log("saving settings", settings);
         window.localStorage.setItem(localStorageKey, JSON.stringify(settings));
         return settings;
     })

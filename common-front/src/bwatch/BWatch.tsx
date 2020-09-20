@@ -566,13 +566,18 @@ export function update(flags: Flags, msg: Msg, model: Model) : [Model, Cmd<Msg>]
             if (model.settings.type === "Nothing") {
                 return noCmd(model);
             }
-            const settings: Settings = model.settings.value;
-            const theme: Theme = settings.theme === "dark" ? "light" : "dark";
+            const currentSettings: Settings = model.settings.value;
+            const theme: Theme = currentSettings.theme === "dark" ? "light" : "dark";
+
+            const settings = {
+                ...currentSettings,
+                theme
+            }
 
             return Tuple.t2n(
                 {
                     ...model,
-                    settings: just({...settings, theme})
+                    settings: just(settings)
                 },
                 Cmd.batch([
                     taskToCmdNoop(saveSettingsToLocalStorage(settings)),
