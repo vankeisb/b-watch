@@ -183,9 +183,11 @@ function createWindow() {
         console.log("update install")
         quitting = true;
         if (server.tag === "Ok") {
-            server.value.close(() =>
+            console.log("closing server before install")
+            server.value.close(() => {
+                console.log("server closed, quit and install");
                 autoUpdater.quitAndInstall()
-            );
+            });
         }
     })
 
