@@ -45,3 +45,7 @@ Start the desktop app :
     cd electron-app
     yarn build # if not compiled already
     yarn dist
+    
+# RHEL
+
+The tray ison isn't shown by default on RHEL8, you need to install the AppIndicator Support GNOME shell extension.
