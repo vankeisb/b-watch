@@ -180,8 +180,13 @@ function createWindow() {
     });
 
     ipcMain.on("update-install", () => {
+        console.log("update install")
         quitting = true;
-        autoUpdater.quitAndInstall()
+        if (server.tag === "Ok") {
+            server.value.close(() =>
+                autoUpdater.quitAndInstall()
+            );
+        }
     })
 
     const dev = process.env.BW_ENV === "dev";
