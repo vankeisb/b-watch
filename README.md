@@ -1,17 +1,21 @@
 **INCEPTION STAGE !**
 
-`b-watch` observes builds from various C.I. servers, allowing you to monitor multiple builds without pain.
+`b-watch` observes various C.I. servers, allowing you to monitor multiple builds without pain. 
 
 Never miss a failed build again !
 
-Features :
-* polls your builds in the background
-    * daemon and local http server
-* GUI with live build statuses
-    * tray integration
-    * notifications
-* supports multiple C.I. vendors 
-    * Travis and Bamboo for now, but easy to add some
+# Features
+
+* Polls C.I. servers for configured builds
+* GUI showing build statuses
+* Group builds 
+* Desktop notifications
+
+# Installation
+
+Download the latest release for your platform [here](https://github.com/vankeisb/b-watch/releases).
+
+The application will look for a `~/.bwatch.json` configuration file by default, unless you pass it via command line argument. An example config can be found in [./bwatch.sample.json](./bwatch.sample.json)
     
 # Build / Test
 
@@ -48,4 +52,4 @@ Start the desktop app :
     
 # RHEL
 
-The tray ison isn't shown by default on RHEL8, you need to install the AppIndicator Support GNOME shell extension.
+The tray icon isn't shown by default on RHEL8, you need to install the AppIndicator Support GNOME shell extension.
