@@ -1,7 +1,7 @@
 {
   "name": "bwatch",
   "productName": "bwatch",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "main": "build/electron.js",
   "description": "build monitoring app",
   "author": "remi@rvkb.com",
