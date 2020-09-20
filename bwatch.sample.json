@@ -3,52 +3,32 @@
   "builds": [
     {
       "tag": "bamboo",
-      "serverUrl": "http://sfactory.francelab.fr.ibm.com:8085",
-      "plan": "TRUNK-DTXCRIT"
-    },{
-      "tag": "travis",
-      "serverUrl": "https://travis.ibm.com",
-      "repository": "VANKEISB/diesel2",
-      "branch": "develop",
-      "token": "${process.env.TRAVIS_TOKEN}",
-      "groups": [ "diesel", "g2"]
-    },{
-      "tag": "travis",
-      "serverUrl": "https://travis.ibm.com",
-      "repository": "VANKEISB/diesel2",
-      "branch": "feature/json-providers",
-      "token": "${process.env.TRAVIS_TOKEN}",
-      "groups": [ "diesel", "g1"]
-    },{
-      "tag": "travis",
-      "serverUrl": "https://travis.ibm.com",
-      "repository": "dba/intellirule",
-      "branch": "develop",
-      "token": "${process.env.TRAVIS_TOKEN}"
+      "serverUrl": "http://my.bamboo.server:8080",
+      "plan": "MY-KEY"
     },{
       "tag": "travis",
       "serverUrl": "https://travis-ci.org",
       "repository": "vankeisb/react-tea-cup",
       "branch": "develop",
-      "groups": [ "tea-cup", "g2"]
+      "groups": [ "tea-cup", "develop"]
     },{
       "tag": "travis",
       "serverUrl": "https://travis-ci.org",
       "repository": "vankeisb/react-tea-cup",
       "branch": "master",
-      "groups": [ "tea-cup", "g1"]
+      "groups": [ "tea-cup", "master"]
     },{
       "tag": "travis",
       "serverUrl": "https://travis-ci.org",
       "repository": "vankeisb/b-watch",
       "branch": "develop",
-      "groups": ["b-watch", "g2"]
+      "groups": ["b-watch", "develop"]
     },{
       "tag": "travis",
       "serverUrl": "https://travis-ci.org",
       "repository": "vankeisb/b-watch",
       "branch": "master",
-      "groups": ["b-watch", "g1", "g2"]
+      "groups": ["b-watch", "master" ]
     }
   ]
 }
