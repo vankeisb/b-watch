@@ -65,7 +65,7 @@ switch (serverRes.tag) {
         server = serverRes.value;
         break;
     case "Err": {
-        console.log(chalk.red(server.err));
+        console.log(chalk.red(serverRes.err));
         app.exit(1);
         break;
     }
@@ -73,43 +73,34 @@ switch (serverRes.tag) {
 
 function createWindow() {
 
+    const trayIcon = app.isPackaged
+        ? process.resourcesPath + "/app.asar/assets/tray-icon.png"
+        : "assets/tray-icon.png"
 
-    app.whenReady().then(() => {
-
-        const icon = "assets/tray-icon.png";
-
-        const trayIcon = app.isPackaged
-            ? process.resourcesPath + "/app.asar/" + icon
-            : icon
-
-        tray = new Tray(trayIcon)
-        const contextMenu = Menu.buildFromTemplate([
-                {
-                    label: 'Show Builds',
-                    click: () => {
-                        console.log("clicked show builds")
-                        win.show();
-                        app.dock && app.dock.show();
-                    }
-                },
-                {
-                    label: 'Quit',
-                    click: () => {
-                        quitting = true;
-                        console.log("closing")
-                        server.close(() =>
-                            app.quit()
-                        );
-                    }
+    tray = new Tray(trayIcon)
+    const contextMenu = Menu.buildFromTemplate([
+            {
+                label: 'Show Builds',
+                click: () => {
+                    console.log("clicked show builds")
+                    win.show();
+                    app.dock && app.dock.show();
                 }
-            ]
-        )
-        tray.setToolTip('build-watcher')
-        tray.setContextMenu(contextMenu)
-    })
-    // tray.on("click", () => {
-    //     win.show()
-    // })
+            },
+            {
+                label: 'Quit',
+                click: () => {
+                    quitting = true;
+                    console.log("closing")
+                    server.close(() =>
+                        app.quit()
+                    );
+                }
+            }
+        ]
+    )
+    tray.setToolTip('build-watcher')
+    tray.setContextMenu(contextMenu)
 
     // Create the browser window.
 
