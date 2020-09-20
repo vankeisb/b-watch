@@ -1,4 +1,4 @@
-import {Result} from "react-tea-cup";
+import {Result, Maybe} from "react-tea-cup";
 import {ListResponse} from "bwatch-common";
 import {Group} from "./Group";
 import {TabType} from "./Tab";
@@ -9,7 +9,7 @@ export type Msg
     | { tag: "got-ws-message"; data: any }
     | { tag: "reload" }
     | { tag: "open-build", url: string }
-    | { tag: "server-ready" }
+    | { tag: "server-ready", err: Maybe<string> }
     | { tag: "tab-clicked", tab: TabType }
     | { tag: "open-group", group: Group }
     | { tag: "close-group" }

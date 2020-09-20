@@ -56,20 +56,18 @@ let tray = null;
 
 let quitting = false;
 
-const serverRes = createServerFromArgs(args);
+const server = createServerFromArgs(args);
 
-let server;
-
-switch (serverRes.tag) {
-    case "Ok":
-        server = serverRes.value;
-        break;
-    case "Err": {
-        console.log(chalk.red(serverRes.err));
-        app.exit(1);
-        break;
-    }
-}
+// switch (serverRes.tag) {
+//     case "Ok":
+//         server = serverRes.value;
+//         break;
+//     case "Err": {
+//         console.log(chalk.red(serverRes.err));
+//         app.exit(1);
+//         break;
+//     }
+// }
 
 function createWindow() {
 
@@ -91,10 +89,12 @@ function createWindow() {
                 label: 'Quit',
                 click: () => {
                     quitting = true;
-                    console.log("closing")
-                    server.close(() =>
-                        app.quit()
-                    );
+                    console.log("quitting app")
+                    if (server.tag === "Ok") {
+                        server.value.close(() =>
+                            app.quit()
+                        );
+                    }
                 }
             }
         ]
@@ -151,11 +151,27 @@ function createWindow() {
             console.log("remote host provided", chalk.green(args.remoteHost), chalk.yellow("will not start local daemon"));
             win.webContents.send("server-ready", args);
         } else {
-            console.log("app ready, starting server");
-            server.start(() => {
-                console.log("server started, notifying app");
-                win.webContents.send("server-ready", args);
-            });
+            console.log("app ready, server=", server);
+            switch (server.tag) {
+                case "Ok": {
+                    console.log("starting server...")
+                    server.value.start(e => {
+                        if (e) {
+                            console.error("error starting server", e);
+                            win.webContents.send("server-error", e.message);
+                        } else {
+                            console.log("server started, notifying app");
+                            win.webContents.send("server-ready", args);
+                        }
+                    });
+                    break;
+                }
+                case "Err": {
+                    console.log("server error", server.err);
+                    win.webContents.send("server-error", server.err);
+                    break;
+                }
+            }
         }
     });
 

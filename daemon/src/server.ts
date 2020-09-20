@@ -7,7 +7,11 @@ const server = createServerFromArgs(parseArgs());
 
 switch (server.tag) {
     case "Ok": {
-        server.value.start();
+        server.value.start(e => {
+            if (e) {
+                console.log(chalk.red(e.message))
+            }
+        });
         break;
     }
     case "Err": {
