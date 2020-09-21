@@ -19,7 +19,9 @@ Download the latest release for your platform [here](https://github.com/vankeisb
 
 The app is configured via a JSON file that specifies the polling interval and the list of builds to be monitored.
 
-It will look for a `~/.bwatch.json` file by default, and you can pass it via command line (`--help` for usage).
+It will look for a `~/.bwatch.json` file by default, and you can pass it via command line (`--help` for usage). 
+
+> The app will exit(1) at startup if the file isn't found or doesn't parse correctly.
 
 An example config can be found in [./bwatch.sample.json](./bwatch.sample.json).
 
