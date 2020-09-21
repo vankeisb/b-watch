@@ -15,7 +15,31 @@ Never miss a failed build again !
 
 Download the latest release for your platform [here](https://github.com/vankeisb/b-watch/releases).
 
-The application will look for a `~/.bwatch.json` configuration file by default, unless you pass it via command line argument. An example config can be found in [./bwatch.sample.json](./bwatch.sample.json)
+# Configuration
+
+The app is configured via a JSON file that specifies the polling interval and the list of builds to be monitored.
+
+It will look for a `~/.bwatch.json` file by default, and you can pass it via command line (`--help` for usage).
+
+An example config can be found in [./bwatch.sample.json](./bwatch.sample.json).
+
+> There's no hot reload, you'll need to restart the app if you change the config.
+
+## Authentication / tokens
+
+The config file may use environment variables using `${process.env.MY_VAR}`. 
+
+Here's how to use your token for Travis :
+
+````
+{
+  "tag": "travis",
+  "serverUrl": "https://travis.myorg.com",
+  "repository": "my/repo",
+  "branch": "develop",
+  "token": "${process.env.TRAVIS_TOKEN}",
+}
+````
     
 # Build / Test
 
