@@ -1,4 +1,4 @@
-**INCEPTION STAGE !**
+[![Build Status](https://travis-ci.org/vankeisb/b-watch.svg?branch=develop)](https://travis-ci.org/vankeisb/b-watch)
 
 `b-watch` observes various C.I. servers, allowing you to monitor multiple builds without pain. 
 
