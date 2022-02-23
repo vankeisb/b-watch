@@ -8,7 +8,8 @@
     "bwatch-common": "^0.0.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-tea-cup": "^1.0.2"
+    "react-tea-cup": "^2.2.0",
+    "tea-cup-core": "^2.2.0"
   },
   "scripts": {
     "clean": "rimraf dist && rimraf build",

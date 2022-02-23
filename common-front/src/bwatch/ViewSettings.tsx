@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Msg} from "./Msg";
-import {Dispatcher, Maybe, nothing} from "react-tea-cup";
+import {Dispatcher, Maybe, nothing} from "tea-cup-core";
 import {Settings} from "./Settings";
 import {UpdateStatus} from "./Model";
 

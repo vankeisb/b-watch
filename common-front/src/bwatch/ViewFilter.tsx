@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Msg} from "./Msg";
-import {Dispatcher} from "react-tea-cup";
+import {Dispatcher} from "tea-cup-core";
 import {Model} from "./Model";
 
 export interface ViewFilterProps {

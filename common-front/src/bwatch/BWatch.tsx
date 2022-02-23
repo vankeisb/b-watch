@@ -1,4 +1,4 @@
-import {Cmd, Dispatcher, just, nothing, ok, err, Result, Sub, Task, Tuple} from "react-tea-cup";
+import {Cmd, Dispatcher, just, nothing, ok, err, Result, Sub, Task, Tuple} from "tea-cup-core";
 import * as React from "react";
 import {gotBuilds, gotWsMessage, Msg} from "./Msg";
 import {Api, BuildInfo, BuildInfoDecoder, ListResponse, RemoteApi} from "bwatch-common";
@@ -146,6 +146,11 @@ function viewTabContent(flags: Flags, dispatch: Dispatcher<Msg>, model: Model, l
                     }
                     case "bamboo": {
                         return strMatches(info.plan);
+                    }
+                    case "circleci": {
+                        return strMatches(info.org)
+                            || strMatches(info.repo)
+                            || strMatches(info.branch);
                     }
                 }
             })
@@ -338,6 +343,10 @@ function getGroupBuildLink(flags: Flags, dispatch: Dispatcher<Msg>, build: Build
             text = build.info.repository + "/" + build.info.branch;
             break;
         }
+        case "circleci": {
+            text = build.info.org + "/" + build.info.repo;
+            break;
+        }
     }
     return (
         <li key={text}>
@@ -442,6 +451,9 @@ function notifTitle(build: BuildInfo): string {
         }
         case "travis": {
             return info.repository + "/" + info.branch;
+        }
+        case "circleci": {
+            return info.org + "/" + info.repo + "/" + info.branch;
         }
     }
 }

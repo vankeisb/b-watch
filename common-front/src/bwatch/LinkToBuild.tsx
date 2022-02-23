@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Flags} from "./Flags";
 import {Msg} from "./Msg";
-import {Dispatcher, Maybe} from "react-tea-cup";
+import {Dispatcher, Maybe} from "tea-cup-core";
 import {BuildStatus, getBuildUrl} from "bwatch-common";
 
 export interface LinkToBuildProps {

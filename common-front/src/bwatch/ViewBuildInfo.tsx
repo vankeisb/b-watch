@@ -1,5 +1,5 @@
 import {Msg} from "./Msg";
-import {Dispatcher, Maybe, nothing} from "react-tea-cup";
+import {Dispatcher, Maybe, nothing} from "tea-cup-core";
 import {BuildInfo, BuildStatus, getBuildUrl} from "bwatch-common";
 import * as React from "react";
 import {linkToBuild} from "./LinkToBuild";
@@ -52,6 +52,11 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
         case "bamboo": {
             title = info.plan;
             break;
+        }
+        case "circleci": {
+            title = info.org + "/" + info.repo;
+            subtitle = info.branch;
+            url = getBuildUrl(props.buildInfo.status);
         }
     }
     const groupItems = props.buildInfo.groups.map(group => (

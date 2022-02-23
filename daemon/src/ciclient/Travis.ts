@@ -55,7 +55,7 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
                     return red(url);
                 }
                 console.error(uuid, "unhandled build state", obj);
-                return error("unhanlded state " + state);
+                return error("unhandled state " + state);
             } else {
                 const error_message = obj.error_message;
                 if (error_message) {
