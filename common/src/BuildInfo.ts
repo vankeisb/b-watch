@@ -12,6 +12,7 @@ export interface BuildInfo {
 export type Info
     = BambooInfo
     | TravisInfo
+    | CircleCIInfo
 
 export interface TravisInfo {
     readonly tag: "travis";
@@ -22,6 +23,13 @@ export interface TravisInfo {
 export interface BambooInfo {
     readonly tag: "bamboo";
     readonly plan: string;
+}
+
+export interface CircleCIInfo {
+    readonly tag: "circleci";
+    readonly org: string;
+    readonly repo: string;
+    readonly branch: string;
 }
 
 export const BambooInfoDecoder: Decoder<BambooInfo> =
@@ -37,6 +45,19 @@ export const TravisInfoDecoder: Decoder<TravisInfo> =
         D.field("branch", D.str)
     );
 
+export const CircleCIInfoDecoder: Decoder<CircleCIInfo> =
+    D.map3(
+        (org, repo, branch) => ({
+            tag: "circleci",
+            org,
+            repo,
+            branch
+        }),
+        D.field("org", D.str),
+        D.field("repo", D.str),
+        D.field("branch", D.str)
+    );
+
 export const InfoDecoder: Decoder<Info> =
     D.andThen(
         tag => {
@@ -45,6 +66,8 @@ export const InfoDecoder: Decoder<Info> =
                     return BambooInfoDecoder;
                 case "travis":
                     return TravisInfoDecoder;
+                case "circleci":
+                    return CircleCIInfoDecoder;
                 default:
                     return D.fail("unhanlded info tag " + tag)
             }

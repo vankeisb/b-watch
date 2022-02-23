@@ -16,7 +16,8 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.3",
-    "react-tea-cup": "^1.0.2",
+    "react-tea-cup": "^2.2.0",
+    "tea-cup-core": "^2.2.0",
     "typescript": "~3.7.2"
   },
   "scripts": {

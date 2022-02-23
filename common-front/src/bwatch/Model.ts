@@ -1,4 +1,4 @@
-import {Maybe, nothing, Result, just} from "react-tea-cup";
+import {Maybe, nothing, Result} from "tea-cup-core";
 import {ListResponse} from "bwatch-common";
 import {Tab} from "./Tab";
 import {Settings} from "./Settings";

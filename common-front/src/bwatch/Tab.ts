@@ -1,4 +1,4 @@
-import {Maybe, nothing} from "react-tea-cup";
+import {Maybe, nothing} from "tea-cup-core";
 
 export type Tab
     = { tag: "builds", readonly filter: Maybe<string> }

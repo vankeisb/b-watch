@@ -1,5 +1,5 @@
 import {Msg} from "./Msg";
-import {Dispatcher, Maybe, nothing} from "react-tea-cup";
+import {Dispatcher, Maybe, nothing} from "tea-cup-core";
 import {BuildInfo, BuildStatus, getBuildUrl} from "bwatch-common";
 import * as React from "react";
 import {linkToBuild} from "./LinkToBuild";
@@ -53,6 +53,11 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
             title = info.plan;
             break;
         }
+        case "circleci": {
+            title = info.org + "/" + info.repo;
+            subtitle = info.branch;
+            url = getBuildUrl(props.buildInfo.status);
+        }
     }
     const groupItems = props.buildInfo.groups.map(group => (
         <span key={group} className="badge badge-pill badge-primary">{group}</span>
@@ -68,7 +73,11 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
     return (
         <div className="card">
             <div className="card-body">
-                <h5 className="card-title">{title}</h5>
+                <h5 className="card-title">
+                    <div className={`icon ${info.tag}`}/>
+                    <div className={"title"}>{title}</div>
+
+                </h5>
                 {subtitle &&
                 <h6 className="card-subtitle mb-2 text-muted">{subtitle}</h6>
                 }

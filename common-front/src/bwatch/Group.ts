@@ -1,5 +1,4 @@
 import {BuildInfo} from "bwatch-common";
-import {Maybe} from "react-tea-cup";
 
 export class Group {
 

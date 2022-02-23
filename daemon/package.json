@@ -17,7 +17,7 @@
     "commander": "^6.1.0",
     "express": "^4.17.1",
     "node-fetch": "^2.6.1",
-    "tea-cup-core": "^1.0.2",
+    "tea-cup-core": "^2.2.0",
     "uuid": "^8.3.0",
     "ws": "^7.3.1"
   },

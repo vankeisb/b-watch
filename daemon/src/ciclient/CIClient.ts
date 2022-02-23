@@ -5,6 +5,7 @@ import chalk from "chalk";
 import {BuildConfig, Configuration, defaultPollingInterval} from "./Configuration";
 import {BambooFetch} from "./Bamboo";
 import {TravisFetch} from "./Travis";
+import {CircleCIFetch} from "./CircleCI";
 
 
 export class CIClient {
@@ -107,6 +108,9 @@ export class Build {
             }
             case "travis": {
                 return new TravisFetch(this.uuid, this._config.conf, onResult);
+            }
+            case "circleci": {
+                return new CircleCIFetch(this.uuid, this._config.conf, onResult);
             }
         }
     }
