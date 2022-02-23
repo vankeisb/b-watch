@@ -73,7 +73,11 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
     return (
         <div className="card">
             <div className="card-body">
-                <h5 className="card-title">{title}</h5>
+                <h5 className="card-title">
+                    <div className={`icon ${info.tag}`}/>
+                    <div className={"title"}>{title}</div>
+
+                </h5>
                 {subtitle &&
                 <h6 className="card-subtitle mb-2 text-muted">{subtitle}</h6>
                 }
