@@ -1,9 +1,11 @@
 import {Msg} from "./Msg";
-import {Dispatcher, Maybe, nothing} from "tea-cup-core";
-import {BuildInfo, BuildStatus, getBuildUrl} from "bwatch-common";
+import {Dispatcher, Maybe, maybeOf, nothing} from "tea-cup-core";
+import {BuildInfo, BuildStatus, getBuildUrl, TimeInfo} from "bwatch-common";
 import * as React from "react";
 import {linkToBuild} from "./LinkToBuild";
 import {Flags} from "./Flags";
+
+const humanizeDuration = require("humanize-duration");
 
 export interface ViewBuildInfoProps {
     dispatch: Dispatcher<Msg>
@@ -11,8 +13,8 @@ export interface ViewBuildInfoProps {
     flags: Flags;
 }
 
-export function ViewStatus(props: {status: BuildStatus}) {
-    const { status } = props;
+export function ViewStatus(props: { status: BuildStatus }) {
+    const {status} = props;
     switch (status.tag) {
         case "error": {
             return <>
@@ -34,6 +36,36 @@ export function ViewStatus(props: {status: BuildStatus}) {
             return <span className="badge badge-secondary">LOADING...</span>;
         }
     }
+}
+
+const shortEnglishHumanizer = humanizeDuration.humanizer({
+    language: "shortEn",
+    languages: {
+        shortEn: {
+            y: () => "y",
+            mo: () => "mo",
+            w: () => "w",
+            d: () => "d",
+            h: () => "h",
+            m: () => "m",
+            s: () => "s",
+            ms: () => "ms",
+        },
+    },
+    delimiter: ' ',
+    spacer: '',
+    largest: 2
+});
+
+export function ViewTime(props: { timeInfo: TimeInfo }) {
+    return <>
+        <span className="badge badge-age">{shortEnglishHumanizer(calcAgeMillis(props.timeInfo))} ago</span>
+        <span className="badge badge-duration">{shortEnglishHumanizer(props.timeInfo.durationSecs * 1000)}</span>
+    </>
+}
+
+function calcAgeMillis(timeInfo: TimeInfo): number {
+    return Date.parse(timeInfo.completedAt) - Date.now()
 }
 
 export function ViewBuildInfo(props: ViewBuildInfoProps) {
@@ -79,7 +111,7 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
 
                 </h5>
                 {subtitle &&
-                <h6 className="card-subtitle mb-2 text-muted">{subtitle}</h6>
+                    <h6 className="card-subtitle mb-2 text-muted">{subtitle}</h6>
                 }
                 {groups}
                 <div className="spacer"/>
@@ -94,8 +126,22 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
                         }).toNative()
                     }
                 </div>
+                {mapTimeInfo(props.buildInfo.status, timeInfo => (<div className="time">
+                    <ViewTime timeInfo={timeInfo}/>
+                </div>)).withDefault(<></>)}
             </div>
         </div>
     )
+}
+
+function mapTimeInfo<T>(status: BuildStatus, f: (timeInfo: TimeInfo) => T): Maybe<T> {
+    switch (status.tag) {
+        case "green":
+            return maybeOf(status.timeInfo).map(f);
+        case "red":
+            return maybeOf(status.timeInfo).map(f);
+        default:
+            return nothing;
+    }
 }
 
