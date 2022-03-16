@@ -95,7 +95,10 @@ export class BambooFetch extends Fetch<BambooConfig> {
                             buildCompletedTime,
                             buildDuration
                         } = res.value;
-                        const timeInfo: TimeInfo = {completedAt: buildCompletedTime, durationSecs: buildDuration};
+                        const timeInfo: TimeInfo = {
+                            completedAt: buildCompletedTime,
+                            durationSecs: buildDuration / 1000
+                        };
                         // TODO what if not finished ?? for now we just do nothing...
                         if (lifeCycleState === "Finished") {
                             const url = config.serverUrl + "/browse/" + buildResultKey;
