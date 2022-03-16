@@ -1,8 +1,8 @@
 import {Cmd, Dispatcher, just, nothing, ok, err, Result, Sub, Task, Tuple} from "tea-cup-core";
 import * as React from "react";
 import {gotBuilds, gotWsMessage, Msg} from "./Msg";
-import {Api, BuildInfo, BuildInfoDecoder, ListResponse, RemoteApi} from "bwatch-common";
-import {ViewBuildInfo} from "./ViewBuildInfo";
+import {Api, BuildInfo, BuildInfoDecoder, ListResponse, mapTimeInfo, RemoteApi} from "bwatch-common";
+import {ViewBuildInfo, ViewTime} from "./ViewBuildInfo";
 import {ViewGroups} from "./ViewGroups";
 import {initialTab, Tab, TabType} from "./Tab";
 import {Flags, Ipc} from "./Flags";
@@ -356,6 +356,9 @@ function getGroupBuildLink(flags: Flags, dispatch: Dispatcher<Msg>, build: Build
                 status: build.status,
                 text
             }).withDefault(<span>{text}</span>)}
+            {mapTimeInfo(build.status, timeInfo => (
+                <ViewTime timeInfo={timeInfo}/>
+            )).withDefault(<></>)}
         </li>
     );
 }

@@ -1,4 +1,4 @@
-import {Decode as D, Decoder, just, Maybe, nothing} from "tea-cup-core";
+import {Decode as D, Decoder, just, Maybe, maybeOf, nothing} from "tea-cup-core";
 
 export type BuildStatus
     = { tag: "none" }
@@ -74,3 +74,15 @@ export const TimeInfoDecoder: Decoder<TimeInfo> =
             durationSecs: D.num
         })
     );
+
+export function mapTimeInfo<T>(status: BuildStatus, f: (timeInfo: TimeInfo) => T): Maybe<T> {
+    switch (status.tag) {
+        case "green":
+            return maybeOf(status.timeInfo).map(f);
+        case "red":
+            return maybeOf(status.timeInfo).map(f);
+        default:
+            return nothing;
+    }
+}
+

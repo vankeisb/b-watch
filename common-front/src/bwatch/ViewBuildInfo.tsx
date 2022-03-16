@@ -1,6 +1,6 @@
 import {Msg} from "./Msg";
 import {Dispatcher, Maybe, maybeOf, nothing} from "tea-cup-core";
-import {BuildInfo, BuildStatus, getBuildUrl, TimeInfo} from "bwatch-common";
+import {BuildInfo, BuildStatus, getBuildUrl, mapTimeInfo, TimeInfo} from "bwatch-common";
 import * as React from "react";
 import {linkToBuild} from "./LinkToBuild";
 import {Flags} from "./Flags";
@@ -54,13 +54,14 @@ const shortEnglishHumanizer = humanizeDuration.humanizer({
     },
     delimiter: ' ',
     spacer: '',
-    largest: 2
+    largest: 2,
+    round: true
 });
 
 export function ViewTime(props: { timeInfo: TimeInfo }) {
     return <>
+        <span className="badge badge-duration">took {shortEnglishHumanizer(props.timeInfo.durationSecs * 1000)}</span>
         <span className="badge badge-age">{shortEnglishHumanizer(calcAgeMillis(props.timeInfo))} ago</span>
-        <span className="badge badge-duration">{shortEnglishHumanizer(props.timeInfo.durationSecs * 1000)}</span>
     </>
 }
 
@@ -132,16 +133,5 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
             </div>
         </div>
     )
-}
-
-function mapTimeInfo<T>(status: BuildStatus, f: (timeInfo: TimeInfo) => T): Maybe<T> {
-    switch (status.tag) {
-        case "green":
-            return maybeOf(status.timeInfo).map(f);
-        case "red":
-            return maybeOf(status.timeInfo).map(f);
-        default:
-            return nothing;
-    }
 }
 
