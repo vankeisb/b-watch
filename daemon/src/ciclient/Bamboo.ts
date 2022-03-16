@@ -1,5 +1,5 @@
 import {Fetch} from "./Fetch";
-import {BuildStatus, error, green, red} from "bwatch-common";
+import {BuildStatus, error, green, red, TimeInfo} from "bwatch-common";
 import {Decode as D, Decoder} from "tea-cup-core";
 import chalk from "chalk";
 import fetch from "node-fetch";
@@ -16,17 +16,22 @@ export interface BambooConfig {
 }
 
 const BambooResultDecoder: Decoder<BambooResult> =
-    D.map3(
-        (buildState, lifeCycleState, buildResultKey) => ({ buildState, lifeCycleState, buildResultKey }),
-        D.field("buildState", D.str),
-        D.field("lifeCycleState", D.str),
-        D.field("buildResultKey", D.str)
-    );
+    D.mapObject(
+        D.mapRequiredFields({
+            buildState: D.str,
+            lifeCycleState: D.str,
+            buildResultKey: D.str,
+            buildCompletedTime: D.str,
+            buildDuration: D.num,
+        }),
+    )
 
 interface BambooResult {
     readonly buildState: string;
     readonly lifeCycleState: string;
     readonly buildResultKey: string;
+    readonly buildCompletedTime: string;
+    readonly buildDuration: number;
 }
 
 const BambooResponseDecoder: Decoder<BambooResult> =
@@ -51,7 +56,7 @@ export class BambooFetch extends Fetch<BambooConfig> {
     constructor(uuid: string, config: BambooConfig, onResult: (status: BuildStatus) => void) {
         super(uuid, config, onResult);
 
-        const { serverUrl, plan, credentials } = config;
+        const {serverUrl, plan, credentials} = config;
         let authPart = "";
         if (credentials) {
             authPart = "os_authType=basic&os_username="
@@ -69,7 +74,7 @@ export class BambooFetch extends Fetch<BambooConfig> {
         const url = planPart
             + "?"
             + authPart
-            + "max-results=1";
+            + "max-results=1&expand=results.result";
 
         console.log(uuid, "fetching " + chalk.green(planPart))
 
@@ -83,14 +88,21 @@ export class BambooFetch extends Fetch<BambooConfig> {
                 switch (res.tag) {
                     case "Ok": {
                         // console.log(uuid, "decoded to", res.value);
-                        const { buildState, lifeCycleState, buildResultKey } = res.value;
+                        const {
+                            buildState,
+                            lifeCycleState,
+                            buildResultKey,
+                            buildCompletedTime,
+                            buildDuration
+                        } = res.value;
+                        const timeInfo: TimeInfo = {completedAt: buildCompletedTime, durationSecs: buildDuration};
                         // TODO what if not finished ?? for now we just do nothing...
                         if (lifeCycleState === "Finished") {
                             const url = config.serverUrl + "/browse/" + buildResultKey;
                             if (buildState === "Successful") {
-                                onResult(green(url));
+                                onResult(green(url, timeInfo));
                             } else {
-                                onResult(red(url));
+                                onResult(red(url, timeInfo));
                             }
                         }
                         break;
@@ -117,7 +129,7 @@ export class BambooFetch extends Fetch<BambooConfig> {
 
 export const BambooConfigDecoder: Decoder<BambooConfig> =
     D.map2(
-        (serverUrl, plan) => ({ serverUrl, plan}),
+        (serverUrl, plan) => ({serverUrl, plan}),
         D.field("serverUrl", D.str),
         D.field("plan", D.str)
     );
