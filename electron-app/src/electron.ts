@@ -177,6 +177,9 @@ function createWindow() {
 
     ipcMain.on("renderer-ready", () => {
         win.webContents.send("get-args", args);
+        server.map(() => {
+            win.webContents.send("server-ready", args);
+        })
     });
 
     ipcMain.on("update-install", () => {
