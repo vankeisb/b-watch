@@ -76,7 +76,7 @@ export class BambooFetch extends Fetch<BambooConfig> {
             + authPart
             + "max-results=1&expand=results.result";
 
-        console.log(uuid, "fetching " + chalk.green(planPart))
+        // console.log(uuid, "fetching " + chalk.green(planPart))
 
         fetch(url)
             .then(r => r.text())
@@ -111,7 +111,7 @@ export class BambooFetch extends Fetch<BambooConfig> {
                         break;
                     }
                     case "Err": {
-                        console.log(uuid, res.err);
+                        // console.log(uuid, res.err);
                         onResult(error(res.err));
                         break;
                     }
@@ -119,7 +119,7 @@ export class BambooFetch extends Fetch<BambooConfig> {
             })
             .catch(e => {
                 if (!this._canceled) {
-                    console.error(e);
+                    // console.error(e);
                     onResult(error(e.message));
                 }
             });

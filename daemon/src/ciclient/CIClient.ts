@@ -16,8 +16,8 @@ export class CIClient {
                 private readonly _listener: (build: Build) => void) {
         const pollingInterval = config.pollingInterval || defaultPollingInterval;
         this.builds = config.builds.map(c => new Build(c, pollingInterval, _listener))
-        console.log("Initialized with", chalk.green(this.builds.length) + " build configuration(s)");
-        console.log("Polling interval", chalk.green(config.pollingInterval), "ms");
+        // console.log("Initialized with", chalk.green(this.builds.length) + " build configuration(s)");
+        // console.log("Polling interval", chalk.green(config.pollingInterval), "ms");
     }
 
     list(): ReadonlyArray<Build> {
@@ -58,15 +58,15 @@ export class Build {
     fetch(): void {
         this._fetchCount++;
         const fetchCount = this._fetchCount;
-        console.log(this.uuid, "fetching")
+        // console.log(this.uuid, "fetching")
         if (this._fetch) {
-            console.log(this.uuid, "canceling previous fetch")
+            // console.log(this.uuid, "canceling previous fetch")
             this._fetch.cancel();
         }
         this._fetch = this.doFetch(status => {
-            console.log(this.uuid, "got fetch status", status);
+            // console.log(this.uuid, "got fetch status", status);
             if (fetchCount !== this._fetchCount) {
-                console.warn(this.uuid, "fetch count dont match", this._fetchCount, fetchCount);
+                // console.warn(this.uuid, "fetch count dont match", this._fetchCount, fetchCount);
                 return;
             }
             this._status = status;
@@ -83,13 +83,13 @@ export class Build {
     }
 
     start(): void {
-        console.log(this.uuid, "start")
+        //console.log(this.uuid, "start")
         this._polling = true;
         this.fetch();
     }
 
     stop(): void {
-        console.log(this.uuid, "stop")
+        // console.log(this.uuid, "stop")
         this._polling = false;
         if (this._fetch) {
             this._fetch.cancel();
