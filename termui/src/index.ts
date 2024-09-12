@@ -1,8 +1,24 @@
 #!/usr/bin/env node
 
-import { BuildStatus } from "bwatch-common";
+import { BuildStatus, getBuildUrl } from "bwatch-common";
 import { Build, CIClient, Configuration, loadConfigFromFile } from "bwatch-daemon";
 import chalk from 'chalk';
+import {Command} from "commander";
+
+const pkgJson = require("../package.json");
+const version = pkgJson.version;
+const program = new Command();
+program
+    .name("bwatch")
+    .description("The b-watch terminal command")
+    .version(version)
+    .option("-f, --filter <string>", "Filter builds");
+
+program.parse(process.argv);
+
+const filter = !program.filter
+    ? undefined
+    : program.filter.toLowerCase();
 
 loadConfigFromFile().match(
     configLoaded,
@@ -33,13 +49,13 @@ function coloredStatus(s: BuildStatus): string {
 function displayName(b: Build): string {
     switch (b.config.tag) {
         case "bamboo": {
-            return b.config.conf.plan + " (Bamboo)";
+            return b.config.conf.plan;
         }
         case "travis": {
-            return b.config.conf.repository + "/" + b.config.conf.branch + " (Travis)";
+            return b.config.conf.repository + "/" + b.config.conf.branch;
         }
         case "circleci": {
-            return b.config.conf.org + "/" + b.config.conf.repo + "/" + b.config.conf.branch + " (Circle CI)";
+            return b.config.conf.org + "/" + b.config.conf.repo + "/" + b.config.conf.branch;
         }
     }
 }
@@ -53,7 +69,11 @@ function configLoaded(c: Configuration) {
             ? " " + b.status.err
             : "";
 
-        console.log(chalk.inverse(coloredStatus(b.status)) + " " + chalk.bold(displayName(b)) + errorStr);
+        const buildUrl = getBuildUrl(b.status)
+            .map(u => " " + u)
+            .withDefault("");
+
+        console.log(chalk.inverse(coloredStatus(b.status)) + " " + displayName(b) + errorStr + buildUrl);
 
         nbBuilds--;
         if (nbBuilds === 0) {
@@ -61,7 +81,18 @@ function configLoaded(c: Configuration) {
         }
     });
     const builds = ciClient.list();
-    ciClient.list().forEach(b => b.fetch());
+    ciClient.list()
+        .filter(acceptFilter)    
+        .forEach(b => b.fetch());
+}
+
+function acceptFilter(b: Build): boolean {
+    if (filter) {
+        const dn = displayName(b);
+        return dn.toLowerCase().indexOf(filter) != -1;    
+    } else {
+        return true;
+    }
 }
 
 interface LineData {
