@@ -4,7 +4,6 @@ import { BuildStatus, getBuildUrl } from "bwatch-common";
 import { Build, CIClient, Configuration, loadConfigFromFile } from "bwatch-daemon";
 import chalk from 'chalk';
 import { Command } from "commander";
-import { Terminal } from "terminal-kit";
 
 const pkgJson = require("../package.json");
 const version = pkgJson.version;
@@ -35,13 +34,13 @@ function coloredStatus(s: BuildStatus): string {
             return "none";
         }
         case "green": {
-            return chalk.green("passed");
+            return chalk.bgGreen("passed");
         }
         case "red": {
-            return chalk.red("failed");
+            return chalk.bgRed("failed");
         }
         case "error": {
-            return chalk.black("error!");
+            return chalk.bgBlack("error!");
         }
     }
 }
@@ -61,28 +60,56 @@ function displayName(b: Build): string {
     }
 }
 
+interface RowData {
+    readonly status: string;
+    readonly label: string;
+    readonly url: string;
+}
+
 function configLoaded(c: Configuration) {
     
     let nbBuilds = 0;
-    const outLines = new Array<string>();
+    const buildResults = new Array<Build>();
 
     const ciClient = new CIClient(c, b => {
-
-        const errorStr = b.status.tag === 'error'
-            ? " " + b.status.err
-            : "";
-
-        const buildUrl = getBuildUrl(b.status)
-            .map(u => " " + u)
-            .withDefault("");
-
-        outLines.push(
-            chalk.inverse(coloredStatus(b.status)) + " " + displayName(b) + errorStr + buildUrl
-        );
+        buildResults.push(b);
 
         nbBuilds--;
         if (nbBuilds === 0) {
-            outLines.forEach(l => console.log(l));
+
+            const rows: ReadonlyArray<RowData> = buildResults.map(b => {
+                const status = coloredStatus(b.status);
+                const label = chalk.bold(displayName(b));
+                const errorStr = b.status.tag === 'error'
+                    ? " " + b.status.err
+                    : "";
+                const url = getBuildUrl(b.status)
+                    .map(u => " " + u)
+                    .withDefault("");
+                return {
+                    status,
+                    label: label + errorStr,
+                    url
+                }                
+            });
+
+            const rowWidths: number[] = rows.reduce((acc, row) => {
+                const w0 = row.status.length;
+                const w1 = row.label.length;
+                const a0 = acc[0] || 0;
+                const a1 = acc[1] || 0;
+                return [
+                    Math.max(w0, a0),
+                    Math.max(w1, a1)
+                ];
+            }, new Array<number>());
+
+            rows.forEach(r => {
+                const line = withTrailing(r.status, rowWidths[0])
+                    + withTrailing(r.label, rowWidths[1])
+                    + r.url
+                console.log(line)
+            });
             setTimeout(() => {
                 process.exit(0);
             }, 100);
@@ -91,6 +118,15 @@ function configLoaded(c: Configuration) {
     const builds = ciClient.list().filter(acceptFilter);
     nbBuilds = builds.length;    
     builds.forEach(b => b.fetch());
+}
+
+function withTrailing(s: string, maxLen: number): string {
+    const nbMissing = maxLen - s.length;
+    if (nbMissing > 0) {
+        const trailing = " ".repeat(nbMissing + 1);
+        return s + trailing;
+    }
+    return s + " ";
 }
 
 function acceptFilter(b: Build): boolean {
