@@ -77,15 +77,20 @@ function configLoaded(c: Configuration) {
         nbBuilds--;
         if (nbBuilds === 0) {
 
-            const rows: ReadonlyArray<RowData> = buildResults.map(b => {
+            let w0 = 0;
+            let w1 = 0;
+
+
+            const rows: Array<RowData> = buildResults.map(b => {
                 const status = coloredStatus(b.status);
                 const label = chalk.bold(displayName(b));
                 const errorStr = b.status.tag === 'error'
                     ? " " + b.status.err
                     : "";
                 const url = getBuildUrl(b.status)
-                    .map(u => " " + u)
                     .withDefault("");
+                w0 = Math.max(status.length, w0);
+                w1 = Math.max(label.length + errorStr.length, w1);
                 return {
                     status,
                     label: label + errorStr,
@@ -93,20 +98,11 @@ function configLoaded(c: Configuration) {
                 }                
             });
 
-            const rowWidths: number[] = rows.reduce((acc, row) => {
-                const w0 = row.status.length;
-                const w1 = row.label.length;
-                const a0 = acc[0] || 0;
-                const a1 = acc[1] || 0;
-                return [
-                    Math.max(w0, a0),
-                    Math.max(w1, a1)
-                ];
-            }, new Array<number>());
-
-            rows.forEach(r => {
-                const line = withTrailing(r.status, rowWidths[0])
-                    + withTrailing(r.label, rowWidths[1])
+            rows
+                .sort((a,b) => a.label.localeCompare(b.label))
+                .forEach(r => {
+                const line = withTrailing(r.status, w0) + "| "
+                    + withTrailing(r.label, w1) + "| "
                     + r.url
                 console.log(line)
             });
