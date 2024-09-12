@@ -3,7 +3,8 @@
 import { BuildStatus, getBuildUrl } from "bwatch-common";
 import { Build, CIClient, Configuration, loadConfigFromFile } from "bwatch-daemon";
 import chalk from 'chalk';
-import {Command} from "commander";
+import { Command } from "commander";
+import { Terminal } from "terminal-kit";
 
 const pkgJson = require("../package.json");
 const version = pkgJson.version;
@@ -61,8 +62,10 @@ function displayName(b: Build): string {
 }
 
 function configLoaded(c: Configuration) {
-    let nbBuilds = 0;
     
+    let nbBuilds = 0;
+    const outLines = new Array<string>();
+
     const ciClient = new CIClient(c, b => {
 
         const errorStr = b.status.tag === 'error'
@@ -73,17 +76,21 @@ function configLoaded(c: Configuration) {
             .map(u => " " + u)
             .withDefault("");
 
-        console.log(chalk.inverse(coloredStatus(b.status)) + " " + displayName(b) + errorStr + buildUrl);
+        outLines.push(
+            chalk.inverse(coloredStatus(b.status)) + " " + displayName(b) + errorStr + buildUrl
+        );
 
         nbBuilds--;
         if (nbBuilds === 0) {
-            process.exit(0);
+            outLines.forEach(l => console.log(l));
+            setTimeout(() => {
+                process.exit(0);
+            }, 100);
         }
     });
-    const builds = ciClient.list();
-    ciClient.list()
-        .filter(acceptFilter)    
-        .forEach(b => b.fetch());
+    const builds = ciClient.list().filter(acceptFilter);
+    nbBuilds = builds.length;    
+    builds.forEach(b => b.fetch());
 }
 
 function acceptFilter(b: Build): boolean {
