@@ -84,16 +84,14 @@ function configLoaded(c: Configuration) {
             const rows: Array<RowData> = buildResults.map(b => {
                 const status = coloredStatus(b.status);
                 const label = chalk.bold(displayName(b));
-                const errorStr = b.status.tag === 'error'
-                    ? " " + b.status.err
-                    : "";
-                const url = getBuildUrl(b.status)
-                    .withDefault("");
+                const url = b.status.tag === 'error'
+                    ? b.status.err
+                    : getBuildUrl(b.status).withDefault("");
                 w0 = Math.max(status.length, w0);
-                w1 = Math.max(label.length + errorStr.length, w1);
+                w1 = Math.max(label.length, w1);
                 return {
                     status,
-                    label: label + errorStr,
+                    label,
                     url
                 }                
             });
