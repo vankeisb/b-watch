@@ -20,8 +20,6 @@ const filter = !program.filter
     ? undefined
     : program.filter.toLowerCase().split(",");
 
-console.log("filter", filter);
-
 loadConfigFromFile().match(
     configLoaded,
     err => {
