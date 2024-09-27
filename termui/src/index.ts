@@ -18,7 +18,9 @@ program.parse(process.argv);
 
 const filter = !program.filter
     ? undefined
-    : program.filter.toLowerCase();
+    : program.filter.toLowerCase().split(",");
+
+console.log("filter", filter);
 
 loadConfigFromFile().match(
     configLoaded,
@@ -125,8 +127,13 @@ function withTrailing(s: string, maxLen: number): string {
 
 function acceptFilter(b: Build): boolean {
     if (filter) {
-        const dn = displayName(b);
-        return dn.toLowerCase().indexOf(filter) != -1;    
+        const dn = displayName(b).toLowerCase();
+        for (let i = 0 ; i < filter.length ; i++) {
+            if (dn.indexOf(filter[i]) !== -1) {
+                return true;
+            }
+        }
+        return false;
     } else {
         return true;
     }
