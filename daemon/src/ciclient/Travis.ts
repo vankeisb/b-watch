@@ -5,7 +5,7 @@ import {Decode as D, Decoder} from "tea-cup-core";
 
 
 function apiUrl(serverUrl: string) {
-    console.log("serverUrl", serverUrl);
+    // console.log("serverUrl", serverUrl);
     if (serverUrl === "https://travis-ci.org") {
         return "https://api.travis-ci.org";
     }
@@ -19,7 +19,7 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
         encodedRepo +
         "/branch/" +
         encodedBranch;
-    console.log(uuid, "fetching build status", url);
+    // console.log(uuid, "fetching build status", url);
     const headers: any = {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -48,15 +48,15 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
                 const timeInfo: TimeInfo = {completedAt: last_build.finished_at, durationSecs};
                 if (state === "started" || state === "created") {
                     state = last_build.previous_state;
-                    console.log("using previous state", state);
+                    // console.log("using previous state", state);
                 }
-                console.log("state", "'" + state + "'");
+                // console.log("state", "'" + state + "'");
                 if (state === "passed") {
                     return green(url, timeInfo);
                 } else if (state === "failed" || state === "errored") {
                     return red(url, timeInfo);
                 }
-                console.error(uuid, "unhandled build state", obj);
+                // console.error(uuid, "unhandled build state", obj);
                 return error("unhandled state " + state);
             } else {
                 const error_message = obj.error_message;
@@ -64,7 +64,7 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
                     return error(error_message);
                 }
             }
-            console.error(uuid, "unable to parse", obj);
+            // console.error(uuid, "unable to parse", obj);
             return error("unable to parse response");
         })
         .catch(e => {
