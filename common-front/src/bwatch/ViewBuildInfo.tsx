@@ -1,9 +1,11 @@
 import {Msg} from "./Msg";
-import {Dispatcher, Maybe, nothing} from "react-tea-cup";
-import {BuildInfo, BuildStatus, getBuildUrl} from "bwatch-common";
+import {Dispatcher, Maybe, maybeOf, nothing} from "tea-cup-core";
+import {BuildInfo, BuildStatus, getBuildUrl, mapTimeInfo, TimeInfo} from "bwatch-common";
 import * as React from "react";
 import {linkToBuild} from "./LinkToBuild";
 import {Flags} from "./Flags";
+
+const humanizeDuration = require("humanize-duration");
 
 export interface ViewBuildInfoProps {
     dispatch: Dispatcher<Msg>
@@ -11,8 +13,8 @@ export interface ViewBuildInfoProps {
     flags: Flags;
 }
 
-export function ViewStatus(props: {status: BuildStatus}) {
-    const { status } = props;
+export function ViewStatus(props: { status: BuildStatus }) {
+    const {status} = props;
     switch (status.tag) {
         case "error": {
             return <>
@@ -36,6 +38,37 @@ export function ViewStatus(props: {status: BuildStatus}) {
     }
 }
 
+const shortEnglishHumanizer = humanizeDuration.humanizer({
+    language: "shortEn",
+    languages: {
+        shortEn: {
+            y: () => "y",
+            mo: () => "mo",
+            w: () => "w",
+            d: () => "d",
+            h: () => "h",
+            m: () => "m",
+            s: () => "s",
+            ms: () => "ms",
+        },
+    },
+    delimiter: ' ',
+    spacer: '',
+    largest: 2,
+    round: true
+});
+
+export function ViewTime(props: { timeInfo: TimeInfo }) {
+    return <>
+        <span className="badge badge-duration">took {shortEnglishHumanizer(props.timeInfo.durationSecs * 1000)}</span>
+        <span className="badge badge-age">{shortEnglishHumanizer(calcAgeMillis(props.timeInfo))} ago</span>
+    </>
+}
+
+function calcAgeMillis(timeInfo: TimeInfo): number {
+    return Date.parse(timeInfo.completedAt) - Date.now()
+}
+
 export function ViewBuildInfo(props: ViewBuildInfoProps) {
 
     let title;
@@ -53,6 +86,11 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
             title = info.plan;
             break;
         }
+        case "circleci": {
+            title = info.org + "/" + info.repo;
+            subtitle = info.branch;
+            url = getBuildUrl(props.buildInfo.status);
+        }
     }
     const groupItems = props.buildInfo.groups.map(group => (
         <span key={group} className="badge badge-pill badge-primary">{group}</span>
@@ -68,9 +106,13 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
     return (
         <div className="card">
             <div className="card-body">
-                <h5 className="card-title">{title}</h5>
+                <h5 className="card-title">
+                    <div className={`icon ${info.tag}`}/>
+                    <div className={"title"}>{title}</div>
+
+                </h5>
                 {subtitle &&
-                <h6 className="card-subtitle mb-2 text-muted">{subtitle}</h6>
+                    <h6 className="card-subtitle mb-2 text-muted">{subtitle}</h6>
                 }
                 {groups}
                 <div className="spacer"/>
@@ -85,6 +127,9 @@ export function ViewBuildInfo(props: ViewBuildInfoProps) {
                         }).toNative()
                     }
                 </div>
+                {mapTimeInfo(props.buildInfo.status, timeInfo => (<div className="time">
+                    <ViewTime timeInfo={timeInfo}/>
+                </div>)).withDefault(<></>)}
             </div>
         </div>
     )

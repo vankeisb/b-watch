@@ -1,12 +1,11 @@
 import {Fetch} from "./Fetch";
-import {BuildStatus, error, green, red} from "bwatch-common";
+import {BuildStatus, error, green, red, TimeInfo} from "bwatch-common";
 import fetch from "node-fetch"
-import {Decoder} from "tea-cup-core";
-import {Decode as D} from "tea-cup-core";
+import {Decode as D, Decoder} from "tea-cup-core";
 
 
 function apiUrl(serverUrl: string) {
-    console.log("serverUrl", serverUrl);
+    // console.log("serverUrl", serverUrl);
     if (serverUrl === "https://travis-ci.org") {
         return "https://api.travis-ci.org";
     }
@@ -20,7 +19,7 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
         encodedRepo +
         "/branch/" +
         encodedBranch;
-    console.log(uuid, "fetching build status", url);
+    // console.log(uuid, "fetching build status", url);
     const headers: any = {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -38,31 +37,34 @@ function getBuildStatus(uuid: string, accessToken: string | undefined, config: T
         })
         .then(r => r.json())
         .then(obj => {
-            const { last_build } = obj;
-            // console.log("obj", obj);
+            const {last_build} = obj;
             if (last_build) {
                 let state = last_build.state;
                 let buildId = last_build.id;
                 let url = config.serverUrl + "/" + config.repository + "/builds/" + buildId;
+                // accumulated duration of all build stages:
+                // const durationSecs = last_build.duration
+                const durationSecs = (Date.parse(last_build.finished_at) - Date.parse(last_build.started_at)) / 1000
+                const timeInfo: TimeInfo = {completedAt: last_build.finished_at, durationSecs};
                 if (state === "started" || state === "created") {
                     state = last_build.previous_state;
-                    console.log("using previous state", state);
+                    // console.log("using previous state", state);
                 }
-                console.log("state", "'" + state + "'");
+                // console.log("state", "'" + state + "'");
                 if (state === "passed") {
-                    return green(url);
+                    return green(url, timeInfo);
                 } else if (state === "failed" || state === "errored") {
-                    return red(url);
+                    return red(url, timeInfo);
                 }
-                console.error(uuid, "unhandled build state", obj);
-                return error("unhanlded state " + state);
+                // console.error(uuid, "unhandled build state", obj);
+                return error("unhandled state " + state);
             } else {
                 const error_message = obj.error_message;
                 if (error_message) {
                     return error(error_message);
                 }
             }
-            console.error(uuid, "unable to parse", obj);
+            // console.error(uuid, "unable to parse", obj);
             return error("unable to parse response");
         })
         .catch(e => {
@@ -98,7 +100,7 @@ export class TravisFetch extends Fetch<TravisConfig> {
 
 export const TravisConfigDecoder: Decoder<TravisConfig> =
     D.map4(
-        (serverUrl, repository, branch, token) => ({ serverUrl, repository, branch, token }),
+        (serverUrl, repository, branch, token) => ({serverUrl, repository, branch, token}),
         D.field("serverUrl", D.str),
         D.field("repository", D.str),
         D.field("branch", D.str),

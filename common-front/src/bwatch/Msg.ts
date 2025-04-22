@@ -1,4 +1,4 @@
-import {Result, Maybe} from "react-tea-cup";
+import {Result, Maybe} from "tea-cup-core";
 import {ListResponse} from "bwatch-common";
 import {Group} from "./Group";
 import {TabType} from "./Tab";

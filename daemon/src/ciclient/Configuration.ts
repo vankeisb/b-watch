@@ -4,10 +4,12 @@ import {Decode as D} from "tea-cup-core/dist/Decode";
 import {TravisConfig, TravisConfigDecoder} from "./Travis";
 import os from "os";
 import fs from "fs";
+import {CircleCIConfig, CircleCIConfigDecoder} from "./CircleCI";
 
 export type BuildConfig
     = BambooBuildConfig
     | TravisBuildConfig
+    | CircleCIBuildConfig
 
 export interface HasGroups {
     readonly groups: readonly string[];
@@ -57,6 +59,21 @@ export const TravisBuildConfigDecoder: Decoder<TravisBuildConfig> =
         TravisConfigDecoder
     );
 
+export const CircleCIBuildConfigDecoder: Decoder<CircleCIBuildConfig> =
+    D.andThen(
+        conf =>
+            D.map(
+                hasTags => ({
+                    tag: 'circleci',
+                    ...hasTags,
+                    conf
+                }),
+                HasGroupsDecoder
+            )
+        ,
+        CircleCIConfigDecoder
+    );
+
 export const BuildConfigDecoder: Decoder<BuildConfig> =
     D.andThen(
         tag => {
@@ -65,6 +82,8 @@ export const BuildConfigDecoder: Decoder<BuildConfig> =
                     return BambooBuildConfigDecoder;
                 case "travis":
                     return TravisBuildConfigDecoder;
+                case "circleci":
+                    return CircleCIBuildConfigDecoder;
                 default:
                     return D.fail("unhandled tag " + tag);
             }
@@ -91,6 +110,11 @@ export const ConfigurationDecoder: Decoder<Configuration> =
 export interface TravisBuildConfig extends HasGroups{
     tag: "travis"
     conf: TravisConfig
+}
+
+export interface CircleCIBuildConfig extends HasGroups {
+    tag: "circleci"
+    conf: CircleCIConfig
 }
 
 export interface Configuration {

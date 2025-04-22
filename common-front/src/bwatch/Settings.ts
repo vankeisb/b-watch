@@ -1,4 +1,4 @@
-import {Decode as D, Decoder, Task} from "react-tea-cup"
+import {Decode as D, Decoder, Task} from "tea-cup-core"
 import {fromLambdaSuccess} from "./TaskSuccessfulFromLambda";
 import {detectTheme, Theme} from "./ThemeConfig";
 

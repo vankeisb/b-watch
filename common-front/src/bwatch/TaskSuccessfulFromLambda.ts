@@ -1,6 +1,6 @@
 // see https://github.com/vankeisb/react-tea-cup/issues/21
 
-import {ok, Result, Task} from "react-tea-cup";
+import {ok, Result, Task} from "tea-cup-core";
 
 export function fromLambdaSuccess<T>(f:() => T): Task<never,T> {
     return new TaskSuccessfulFromLambda(f);

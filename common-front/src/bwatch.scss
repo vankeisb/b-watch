@@ -1,6 +1,8 @@
 @import "~bootstrap/dist/css/bootstrap.min.css";
 @import "~bootstrap-darkmode/dist/darktheme.css";
 
+@import "bwatch-icons";
+
 $border-color: #f1f1f1;
 $break-point: 700px;
 
@@ -76,10 +78,31 @@ $break-point: 700px;
             border-color: $border-color;
         }
 
+        .card-title {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            .icon {
+                height: 16px;
+                width: 16px;
+                background-size: contain;
+                background-repeat: no-repeat;
+                margin-right: 4px;
+            }
+            .title {
+                flex-grow: 1;
+            }
+        }
+
         .status {
             display: flex;
             flex-direction: row;
             align-items: center;
+        }
+
+        .time {
+            color: gray;
+            font-size: smaller;
         }
 
         .badge {

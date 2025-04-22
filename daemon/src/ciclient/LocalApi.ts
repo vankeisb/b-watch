@@ -49,5 +49,19 @@ export function toBuildInfo(build: Build): BuildInfo {
                 groups: config.groups
             }
         }
+        case "circleci": {
+            return {
+                tag: "build-info",
+                uuid,
+                status,
+                info: {
+                    tag: "circleci",
+                    org: config.conf.org,
+                    repo: config.conf.repo,
+                    branch: config.conf.branch
+                },
+                groups: config.groups
+            }
+        }
     }
 }

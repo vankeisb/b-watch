@@ -1,7 +1,7 @@
 import { ListResponse } from "bwatch-common";
 import * as React from "react";
 import {Msg} from "./Msg";
-import { Dispatcher, Maybe } from "react-tea-cup";
+import { Dispatcher, Maybe } from "tea-cup-core";
 import {computeGroups, Group} from "./Group";
 
 export interface ViewGroupsProps {

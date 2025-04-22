@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "tea-cup-core": "^1.0.2"
+    "tea-cup-core": "^2.2.0"
   },
   "scripts": {
     "clean": "rimraf dist && rimraf build",

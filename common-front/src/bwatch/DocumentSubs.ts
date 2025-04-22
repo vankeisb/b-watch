@@ -1,4 +1,4 @@
-import {Sub} from "react-tea-cup";
+import {Sub} from "tea-cup-core";
 
 export function docOn<M, K extends keyof DocumentEventMap>(type: K,
                                                      toMsg: (ev: DocumentEventMap[K]) => M,
